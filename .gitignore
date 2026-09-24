@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment files
+.env
+**/.env
+.env.*
+!**/.env.example
+
+# Build outputs
+/dist/
+**/dist/
+/build/
+**/build/
+.vite/
+**/.vite/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local database dumps / caches
+*.sqlite
+*.sql.*

@@ -1,0 +1,120 @@
+.security-page {
+  min-height: 100vh;
+  background: var(--cream);
+  color: var(--charcoal);
+}
+
+.security-header {
+  min-height: 76px;
+  padding: 0 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--burgundy-deep);
+}
+
+.security-back {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--white);
+  border-radius: 10px;
+  padding: 10px 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.security-main {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: 64px 0 80px;
+}
+
+.security-hero {
+  margin-bottom: 36px;
+}
+
+.security-eyebrow {
+  display: inline-block;
+  color: var(--burgundy);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.security-hero h1 {
+  margin: 12px 0 16px;
+  color: var(--burgundy-deep);
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.security-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--charcoal-soft);
+  line-height: 1.75;
+}
+
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.security-card {
+  padding: 24px;
+  border: 1px solid rgba(74, 18, 31, 0.12);
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 12px 28px rgba(42, 38, 34, 0.04);
+}
+
+.security-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: var(--burgundy-deep);
+  color: var(--gold-soft);
+}
+
+.security-card h2 {
+  margin: 0 0 10px;
+  color: var(--burgundy-deep);
+  font-size: 1.12rem;
+}
+
+.security-card p {
+  margin: 0;
+  color: var(--charcoal-soft);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .security-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .security-header {
+    padding: 0 5%;
+  }
+
+  .security-main {
+    width: 90%;
+    padding: 48px 0 64px;
+  }
+
+  .security-grid {
+    grid-template-columns: 1fr;
+  }
+}

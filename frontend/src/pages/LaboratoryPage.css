@@ -1,0 +1,249 @@
+.laboratory-page {
+  min-height: 100vh;
+  background: var(--cream);
+  color: var(--charcoal);
+}
+
+.laboratory-header {
+  min-height: 72px;
+  padding: 0 32px;
+  background: var(--burgundy-deep);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.laboratory-back {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: var(--white);
+  padding: 10px 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.laboratory-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
+
+.laboratory-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.laboratory-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--burgundy);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.laboratory-hero h1 {
+  margin: 10px 0 8px;
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--burgundy-deep);
+}
+
+.laboratory-hero p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--charcoal-soft);
+  line-height: 1.7;
+}
+
+.laboratory-add {
+  border: none;
+  background: var(--burgundy);
+  color: var(--white);
+  padding: 12px 18px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.laboratory-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.laboratory-stat {
+  background: var(--white);
+  border: 1px solid rgba(74, 18, 31, 0.08);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(58, 14, 25, 0.05);
+}
+
+.laboratory-stat svg {
+  color: var(--gold);
+}
+
+.laboratory-stat div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.laboratory-stat strong {
+  font-size: 1.5rem;
+  color: var(--burgundy-deep);
+}
+
+.laboratory-stat span {
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+}
+
+.laboratory-panel {
+  background: var(--white);
+  border: 1px solid rgba(74, 18, 31, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(58, 14, 25, 0.05);
+}
+
+.laboratory-panel-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--soft-grey);
+}
+
+.laboratory-panel-header h2 {
+  margin: 0 0 5px;
+  color: var(--burgundy-deep);
+}
+
+.laboratory-panel-header p {
+  margin: 0;
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+}
+
+.laboratory-search {
+  min-width: 280px;
+  border: 1px solid #ddd7cf;
+  border-radius: 9px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.laboratory-search svg {
+  color: var(--charcoal-soft);
+}
+
+.laboratory-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  color: var(--charcoal);
+}
+
+.laboratory-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.laboratory-table-head,
+.laboratory-table-row {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1.8fr 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+.laboratory-table-head {
+  background: var(--soft-grey);
+  color: var(--charcoal-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.laboratory-table-row {
+  border-top: 1px solid #eee9e2;
+  font-size: 0.92rem;
+}
+
+.laboratory-table-row strong {
+  color: var(--burgundy);
+}
+
+.status {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status.pending {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.status.completed {
+  background: var(--emerald-soft);
+  color: var(--emerald);
+}
+
+@media (max-width: 760px) {
+  .laboratory-header {
+    padding: 0 18px;
+  }
+
+  .laboratory-main {
+    padding: 32px 16px 48px;
+  }
+
+  .laboratory-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .laboratory-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .laboratory-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .laboratory-search {
+    min-width: 0;
+  }
+}

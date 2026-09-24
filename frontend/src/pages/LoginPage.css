@@ -1,0 +1,194 @@
+/* ================================
+   HEALTHBRIDGE LOGIN
+   ================================ */
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--cream);
+}
+
+.login-container {
+  width: min(440px, 100%);
+}
+
+.login-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.login-label {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--burgundy);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.login-header h1 {
+  margin: 0;
+  color: var(--burgundy-deep);
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.5rem, 7vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.login-header p {
+  max-width: 390px;
+  margin: 18px auto 0;
+  color: var(--charcoal-soft);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.form-field label,
+.password-label label {
+  color: var(--charcoal);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.form-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 15px 16px;
+  border: 1px solid #d9d3ca;
+  border-radius: 4px;
+  outline: none;
+  background: var(--white);
+  color: var(--charcoal);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input::placeholder {
+  color: #a39b91;
+}
+
+.form-field input:focus {
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 3px rgba(109, 27, 44, 0.08);
+}
+
+.password-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-label button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--burgundy);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  padding-right: 48px;
+}
+
+.password-input > button {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  transform: translateY(-50%);
+  background: transparent;
+  color: var(--charcoal-soft);
+  cursor: pointer;
+}
+
+.password-input > button:hover {
+  color: var(--burgundy);
+}
+
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 5px;
+  padding: 15px 20px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--burgundy-deep);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.login-submit:hover {
+  background: var(--burgundy);
+  transform: translateY(-1px);
+}
+
+.login-security {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+  color: var(--charcoal-soft);
+  text-align: center;
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.login-security svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--emerald);
+}
+
+@media (max-width: 600px) {
+  .login-page {
+    padding: 30px 20px;
+  }
+
+  .login-brand {
+    margin-bottom: 38px;
+  }
+
+  .login-header {
+    margin-bottom: 30px;
+  }
+}
