@@ -63,7 +63,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'HealthBridge backend',
-    mode: 'mysql',
+    mode: isFallbackMode() ? 'fallback' : 'mysql',
     timestamp: new Date().toISOString(),
   });
 });

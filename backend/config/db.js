@@ -215,9 +215,9 @@ async function initializeDatabase() {
   const hasDbConfig = process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME;
 
   if (!hasDbConfig) {
-    const message = 'MySQL environment variables are incomplete. DB_HOST, DB_USER, and DB_NAME are required.';
     databaseAvailable = false;
-    throw new Error(message);
+    console.warn('MySQL environment variables are incomplete. Starting HealthBridge in fallback demo mode.');
+    return false;
   }
 
   try {
@@ -260,9 +260,9 @@ async function initializeDatabase() {
     return true;
   } catch (error) {
     databaseAvailable = false;
-    console.error('MySQL initialization failed.');
-    console.error(error.message);
-    throw error;
+    console.warn('MySQL initialization failed. Starting HealthBridge in fallback demo mode.');
+    console.warn(error.message);
+    return false;
   }
 }
 
