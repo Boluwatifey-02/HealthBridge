@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --burgundy: #6d1b2c;
+  --burgundy-dark: #4a121f;
+  --burgundy-deep: #3a0e19;
+
+  --gold: #c9a227;
+  --gold-soft: #e4ce86;
+
+  --cream: #f8f3ea;
+  --white: #ffffff;
+  --soft-grey: #f1efec;
+  --border: #e4dfd8;
+
+  --charcoal: #2a2622;
+  --charcoal-soft: #5c554c;
+
+  --emerald: #1e7b5a;
+  --emerald-soft: #e4f3ec;
+
+  --red: #b3261e;
+  --red-soft: #fbe9e7;
+
+  font-family: 'Inter', sans-serif;
+  color: var(--charcoal);
+  background: var(--cream);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--cream);
+  color: var(--charcoal);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Fraunces', serif;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ================================
+   HEALTHBRIDGE BRAND
+   ================================ */
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--burgundy-deep);
+}
+
+.brand-name {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.brand-dark {
+  color: var(--white);
+}
+
+.brand-pulse-animated {
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: hb-draw 1.8s ease-out forwards;
+}
+
+@keyframes hb-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

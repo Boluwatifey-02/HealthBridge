@@ -1,0 +1,138 @@
+.ai-features-section {
+  background: var(--white);
+  padding: 110px 24px;
+}
+
+.ai-features-container {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.ai-features-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 70px;
+  align-items: center;
+}
+
+.ai-features-intro {
+  padding: 40px;
+  background: var(--burgundy-deep);
+  color: var(--white);
+}
+
+.ai-features-intro .section-label {
+  color: var(--gold-soft);
+}
+
+.ai-features-intro h2 {
+  margin: 16px 0 20px;
+  color: var(--white);
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.2rem, 4vw, 3.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.ai-features-intro h2 span {
+  display: block;
+  color: var(--white);
+}
+
+.ai-features-intro p {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+}
+
+.ai-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 30px;
+  padding: 8px 12px;
+  border: 1px solid rgba(228, 206, 134, 0.35);
+  color: var(--gold-soft);
+  font-size: 0.75rem;
+}
+
+.ai-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.ai-features-list {
+  display: grid;
+  gap: 0;
+}
+
+.ai-feature-card {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 20px;
+  padding: 28px 0;
+  border-bottom: 1px solid #e1ddd7;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ai-feature-card:first-child {
+  border-top: 1px solid #e1ddd7;
+}
+
+.ai-feature-card:hover,
+.ai-feature-card:focus-visible {
+  background: rgba(248, 243, 234, 0.4);
+  outline: none;
+}
+
+.ai-feature-card:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(109, 27, 44, 0.18);
+}
+
+.ai-feature-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--burgundy);
+}
+
+.ai-feature-card h3 {
+  margin: 0 0 8px;
+  color: var(--charcoal);
+  font-family: 'Fraunces', serif;
+  font-size: 1.25rem;
+}
+
+.ai-feature-card p {
+  margin: 0;
+  color: var(--charcoal-soft);
+  font-size: 0.88rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 850px) {
+  .ai-features-layout {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ai-features-section {
+    padding: 80px 20px;
+  }
+
+  .ai-features-intro {
+    padding: 30px 24px;
+  }
+
+  .ai-feature-card {
+    grid-template-columns: 44px 1fr;
+    gap: 15px;
+  }
+}
