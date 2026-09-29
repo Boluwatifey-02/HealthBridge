@@ -7,6 +7,24 @@ let pool = null;
 let databaseAvailable = false;
 let databaseError = null;
 
+// TLS is opt-in: it activates only when DB_SSL_CA is present, so local MySQL
+// development over localhost continues to work without certificates.
+function buildSslOptions() {
+  const ca = (process.env.DB_SSL_CA || '').trim();
+
+  if (!ca) {
+    return {};
+  }
+
+  return {
+    ssl: {
+      ca,
+      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+      minVersion: 'TLSv1.2',
+    },
+  };
+}
+
 async function initializeDatabase() {
   const hasDbConfig = process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME;
 
@@ -19,12 +37,15 @@ async function initializeDatabase() {
     return false;
   }
 
+  const sslOptions = buildSslOptions();
+
   try {
     const rootConnection = await mysql.createConnection({
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT || 3306),
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD || '',
+      ...sslOptions,
     });
 
     try {
@@ -44,6 +65,7 @@ async function initializeDatabase() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      ...sslOptions,
     });
 
     await pool.query('SELECT 1');
