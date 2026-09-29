@@ -25,13 +25,6 @@ const REGION = 'frankfurt';
 const PLAN = 'free';
 const SERVICE_NAME = 'healthbridge-api';
 
-const AIVEN = {
-  host: 'healthbridge-mysql-boluwatifeayo28-3ca6.c.aivencloud.com',
-  port: '10341',
-  user: 'avnadmin',
-  database: 'defaultdb',
-};
-
 function readSecretsFile() {
   if (!fs.existsSync(SECRETS_FILE)) {
     console.error('Missing deploy/render-secrets.env');
@@ -126,6 +119,18 @@ async function main() {
   const apiKey = values.RENDER_API_KEY;
   const dbPassword = values.DB_PASSWORD;
 
+  const aiven = {
+    host: values.DB_HOST || '',
+    port: values.DB_PORT || '',
+    user: values.DB_USER || '',
+    database: values.DB_NAME || '',
+  };
+
+  if (!aiven.host || !aiven.port || !aiven.user || !aiven.database) {
+    console.error('DB_HOST, DB_PORT, DB_USER and DB_NAME must be set in deploy/render-secrets.env');
+    process.exit(1);
+  }
+
   if (!apiKey) {
     console.error('RENDER_API_KEY is empty in deploy/render-secrets.env');
     process.exit(1);
@@ -138,6 +143,8 @@ async function main() {
     console.error('Missing backend/aiven-ca.pem - the Aiven CA certificate is required.');
     process.exit(1);
   }
+
+  console.log(`Database target: ${aiven.user}@${aiven.host}:${aiven.port}/${aiven.database}`);
 
   const jwtSecret = resolveSecret(values, 'GENERATED_JWT_SECRET', () =>
     crypto.randomBytes(48).toString('hex')
@@ -212,11 +219,11 @@ async function main() {
     { key: 'NODE_ENV', value: 'production' },
     { key: 'JWT_SECRET', value: jwtSecret, type: 'secret' },
     { key: 'JWT_EXPIRES_IN', value: '8h' },
-    { key: 'DB_HOST', value: AIVEN.host },
-    { key: 'DB_PORT', value: AIVEN.port },
-    { key: 'DB_USER', value: AIVEN.user },
+    { key: 'DB_HOST', value: aiven.host },
+    { key: 'DB_PORT', value: aiven.port },
+    { key: 'DB_USER', value: aiven.user },
     { key: 'DB_PASSWORD', value: dbPassword, type: 'secret' },
-    { key: 'DB_NAME', value: AIVEN.database },
+    { key: 'DB_NAME', value: aiven.database },
     { key: 'DB_SSL_CA', value: caSingleLine, type: 'secret' },
     { key: 'DB_SSL_REJECT_UNAUTHORIZED', value: 'true' },
     { key: 'SEED_STAFF', value: 'true' },
