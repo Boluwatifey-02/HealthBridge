@@ -8,6 +8,14 @@ node_modules/
 .env.*
 !**/.env.example
 
+# TLS certificates and key material
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
 # Build outputs
 /dist/
 **/dist/
