@@ -10,11 +10,16 @@ let databaseError = null;
 // TLS is opt-in: it activates only when DB_SSL_CA is present, so local MySQL
 // development over localhost continues to work without certificates.
 function buildSslOptions() {
-  const ca = (process.env.DB_SSL_CA || '').trim();
+  const raw = (process.env.DB_SSL_CA || '').trim();
 
-  if (!ca) {
+  if (!raw) {
     return {};
   }
+
+  // Deployment environments deliver the certificate as a single-line value with
+  // escaped newlines. Node's TLS layer needs real newlines to parse the PEM, so
+  // unescape when the literal sequence is present.
+  const ca = raw.includes('\\n') ? raw.replace(/\\n/g, '\n') : raw;
 
   return {
     ssl: {

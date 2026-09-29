@@ -16,14 +16,17 @@ const ROOT = path.join(__dirname, '..');
 const SECRETS_FILE = path.join(__dirname, 'render-secrets.env');
 const CA_FILE = path.join(ROOT, 'backend', 'aiven-ca.pem');
 
-const GITHUB_REPO = 'https://github.com/Boluwatifey-02/HealthBridge';
+const GITHUB_REPO_SHORT = 'Boluwatifey-02/HealthBridge';
+const GITHUB_REPO_URL = 'https://github.com/Boluwatifey-02/HealthBridge';
 const BRANCH = 'master';
 const ROOT_DIR = 'backend';
 const BUILD_COMMAND = 'npm install';
 const START_COMMAND = 'npm start';
 const REGION = 'frankfurt';
 const PLAN = 'free';
-const SERVICE_NAME = 'healthbridge-api';
+const SERVICE_NAMES = ['healthbridge-api', 'healthbridge-backend'];
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function readSecretsFile() {
   if (!fs.existsSync(SECRETS_FILE)) {
@@ -57,8 +60,11 @@ function readSecretsFile() {
   return values;
 }
 
-async function renderApi(apiKey, path, options = {}) {
-  const response = await fetch(`https://api.render.com/v1${path}`, {
+// Render enforces a fairly tight rate limit; back off and retry instead of failing.
+async function renderApi(apiKey, apiPath, options = {}, attempt = 1) {
+  const maxAttempts = 6;
+
+  const response = await fetch(`https://api.render.com/v1${apiPath}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -67,6 +73,13 @@ async function renderApi(apiKey, path, options = {}) {
       ...(options.headers || {}),
     },
   });
+
+  if (response.status === 429 && attempt < maxAttempts) {
+    const waitSeconds = Math.min(5 * 2 ** (attempt - 1), 120);
+    console.log(`  rate limited; retrying in ${waitSeconds}s (attempt ${attempt}/${maxAttempts})`);
+    await sleep(waitSeconds * 1000);
+    return renderApi(apiKey, apiPath, options, attempt + 1);
+  }
 
   const text = await response.text();
   let body = null;
@@ -79,7 +92,9 @@ async function renderApi(apiKey, path, options = {}) {
 
   if (!response.ok) {
     const detail = body && body.message ? body.message : text;
-    throw new Error(`Render API ${options.method || 'GET'} ${path} failed (${response.status}): ${detail}`);
+    throw new Error(
+      `Render API ${options.method || 'GET'} ${apiPath} failed (${response.status}): ${detail}`
+    );
   }
 
   return body;
@@ -110,7 +125,9 @@ function persistSecrets(values) {
   fs.writeFileSync(SECRETS_FILE, `${lines.join('\n')}\n`, { mode: 0o600 });
 
   const generatedKeys = Object.keys(values).filter((k) => k.startsWith('GENERATED_'));
-  console.log(`Persisted generated values to render-secrets.env: ${generatedKeys.join(', ')}`);
+  if (generatedKeys.length) {
+    console.log(`Persisted generated values to render-secrets.env: ${generatedKeys.join(', ')}`);
+  }
 }
 
 async function main() {
@@ -130,7 +147,6 @@ async function main() {
     console.error('DB_HOST, DB_PORT, DB_USER and DB_NAME must be set in deploy/render-secrets.env');
     process.exit(1);
   }
-
   if (!apiKey) {
     console.error('RENDER_API_KEY is empty in deploy/render-secrets.env');
     process.exit(1);
@@ -165,51 +181,81 @@ async function main() {
   const caSingleLine = ca.replace(/\r?\n/g, '\\n');
 
   console.log('Locating Render workspace...');
-  const owners = await renderApi(apiKey, '/owners');
-  const workspace = owners.find((owner) => owner.type === 'team' || owner.type === 'user') || owners[0];
+  const ownersResponse = await renderApi(apiKey, '/owners');
+  const owners = (Array.isArray(ownersResponse) ? ownersResponse : [])
+    .map((entry) => (entry && entry.owner ? entry.owner : entry))
+    .filter(Boolean);
+  const workspace =
+    owners.find((owner) => owner.type === 'team') ||
+    owners.find((owner) => owner.type === 'user') ||
+    owners[0];
+
+  if (!workspace || !workspace.id) {
+    console.error('Could not resolve a Render workspace from the API response.');
+    process.exit(1);
+  }
   console.log(`Using Render workspace: ${workspace.name} (${workspace.type})`);
 
   console.log('Checking for an existing HealthBridge service...');
-  const existing = await renderApi(apiKey, `/services?limit=100`);
-  let service = existing.find((item) => item.service?.name === SERVICE_NAME || item.name === SERVICE_NAME);
+  const existing = await renderApi(apiKey, '/services?limit=100');
+  const normalized = existing.map((item) => item.service || item);
 
-  const serviceSpec = {
-    name: SERVICE_NAME,
-    type: 'web',
-    repository: GITHUB_REPO,
-    branch: BRANCH,
-    rootDir: ROOT_DIR,
-    buildCommand: BUILD_COMMAND,
-    startCommand: START_COMMAND,
-    plan: PLAN,
-    region: REGION,
-    healthCheckPath: '/api/health',
-    autoDeploy: true,
-  };
+  // Prefer a known name, then fall back to any service already pointed at backend/.
+  let service =
+    SERVICE_NAMES.map((n) => normalized.find((s) => s.name === n)).find(Boolean) ||
+    normalized.find((s) => s.rootDir === ROOT_DIR) ||
+    null;
 
   if (!service) {
     console.log('Creating the web service...');
-    const created = await renderApi(apiKey, `/services`, {
+    const created = await renderApi(apiKey, '/services', {
       method: 'POST',
-      body: JSON.stringify({ ...serviceSpec, ownerId: workspace.ownerId || workspace.id }),
+      body: JSON.stringify({
+        type: 'web_service',
+        name: SERVICE_NAMES[0],
+        ownerId: workspace.id,
+        repo: GITHUB_REPO_SHORT,
+        branch: BRANCH,
+        rootDir: ROOT_DIR,
+        autoDeploy: 'yes',
+        autoDeployTrigger: 'commit',
+        serviceDetails: {
+          webServiceDetails: {
+            runtime: 'node',
+            plan: PLAN,
+            region: REGION,
+            healthCheckPath: '/api/health',
+            envSpecificDetails: {
+              buildCommand: BUILD_COMMAND,
+              startCommand: START_COMMAND,
+            },
+            numInstances: 1,
+          },
+        },
+      }),
     });
     service = created.service || created;
     console.log(`Created service ${service.id}`);
   } else {
-    console.log(`Updating existing service ${service.id}`);
-    service = await renderApi(apiKey, `/services/${service.id}`, {
+    console.log(`Adopting existing service ${service.id} (${service.name})`);
+    await renderApi(apiKey, `/services/${service.id}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        buildCommand: BUILD_COMMAND,
-        startCommand: START_COMMAND,
-        plan: PLAN,
-        region: REGION,
         branch: BRANCH,
         rootDir: ROOT_DIR,
-        healthCheckPath: '/api/health',
-        autoDeploy: true,
+        autoDeployTrigger: 'commit',
+        serviceDetails: {
+          webServiceDetails: {
+            healthCheckPath: '/api/health',
+            envSpecificDetails: {
+              buildCommand: BUILD_COMMAND,
+              startCommand: START_COMMAND,
+            },
+          },
+        },
       }),
-    }).then((res) => res.service || res);
+    });
+    console.log(`Service updated to branch=${BRANCH}, rootDir=${ROOT_DIR}, healthCheck=/api/health`);
   }
 
   const serviceId = service.id;
@@ -240,24 +286,28 @@ async function main() {
     method: 'PUT',
     body: JSON.stringify(envVars),
   });
-
   console.log(`Environment variables applied to ${serviceId}.`);
 
   const finalState = await renderApi(apiKey, `/services/${serviceId}`);
   const s = finalState.service || finalState;
+  const webDetails = s.serviceDetails && s.serviceDetails.webServiceDetails;
+  const envDetails = (webDetails && webDetails.envSpecificDetails) || {};
+
   console.log('\n=== Service ===');
   console.log(`name        : ${s.name}`);
+  console.log(`id          : ${s.id}`);
   console.log(`branch      : ${s.branch}`);
   console.log(`rootDir     : ${s.rootDir}`);
-  console.log(`region      : ${s.region && s.region.id ? s.region.id : s.region}`);
-  console.log(`plan        : ${s.plan}`);
-  console.log(`build       : ${s.buildCommand}`);
-  console.log(`start       : ${s.startCommand}`);
-  console.log(`healthCheck : ${s.healthCheckPath}`);
-  console.log(`public url  : ${s.serviceDetails && s.serviceDetails.webServiceDetails ? s.serviceDetails.webServiceDetails.url : 'pending'}`);
+  console.log(`runtime     : ${webDetails ? webDetails.runtime : 'unknown'}`);
+  console.log(`plan        : ${webDetails ? webDetails.plan : 'unknown'}`);
+  console.log(`region      : ${webDetails ? (webDetails.region.id || webDetails.region) : 'unknown'}`);
+  console.log(`build       : ${envDetails.buildCommand || 'unknown'}`);
+  console.log(`start       : ${envDetails.startCommand || 'unknown'}`);
+  console.log(`healthCheck : ${webDetails ? webDetails.healthCheckPath || '(none)' : 'unknown'}`);
+  console.log(`public url  : ${webDetails ? webDetails.url : 'pending'}`);
 
-  console.log('\nDeployment configuration complete. No secret was printed.');
-  console.log('Generated credentials are stored in deploy/render-secrets.env (open that file to read them).');
+  console.log('\nNo secret was printed.');
+  console.log(`Seed credentials are in deploy/render-secrets.env (read it locally).`);
 }
 
 main().catch((error) => {
