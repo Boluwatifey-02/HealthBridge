@@ -16,6 +16,10 @@ node_modules/
 *.p12
 *.pfx
 
+# Deployment secrets
+deploy/render-secrets.env
+deploy/*.local
+
 # Build outputs
 /dist/
 **/dist/
