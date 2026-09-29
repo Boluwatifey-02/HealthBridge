@@ -10,6 +10,7 @@ import {
   CircleAlert,
   ChevronRight,
   ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import Brand from '../components/Brand';
 import api from '../services/api';
@@ -47,12 +48,17 @@ const normalizeAppointment = (appointment = {}) => ({
   status: appointment.status || 'Scheduled',
 });
 
-function AppointmentsPage() {
+function AppointmentsPage({ onLogout }) {
   const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     const loadAppointments = async () => {
@@ -60,8 +66,15 @@ function AppointmentsPage() {
         setIsLoading(true);
         setError('');
 
-        const data = await api.getAppointments();
-        setAppointments(Array.isArray(data) ? data.map(normalizeAppointment) : []);
+        const [appointmentData, patientData] = await Promise.all([
+          api.getAppointments(),
+          api.getPatients().catch(() => []),
+        ]);
+
+        setAppointments(
+          Array.isArray(appointmentData) ? appointmentData.map(normalizeAppointment) : [],
+        );
+        setPatients(Array.isArray(patientData) ? patientData : []);
       } catch (loadError) {
         console.error('Unable to fetch appointments:', loadError);
         setError(loadError.message || 'Unable to load appointments from the backend.');
@@ -73,6 +86,47 @@ function AppointmentsPage() {
 
     loadAppointments();
   }, []);
+
+  const handleCreateAppointment = async (event) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const patientId = String(formData.get('patientId') || '').trim();
+    const date = String(formData.get('date') || '').trim();
+    const time = String(formData.get('time') || '').trim();
+    const provider = String(formData.get('provider') || '').trim();
+    const reason = String(formData.get('reason') || '').trim();
+
+    if (!patientId || !date || !time) {
+      setFormError('Patient, date and time are required.');
+      return;
+    }
+
+    try {
+      setFormError('');
+      setIsSaving(true);
+
+      const createdAppointment = await api.createAppointment({
+        patientId,
+        date,
+        time,
+        provider,
+        reason,
+        status: 'Scheduled',
+      });
+
+      setAppointments((current) => [normalizeAppointment(createdAppointment), ...current]);
+      setNotice('Appointment saved to the HealthBridge database.');
+      setIsFormOpen(false);
+      form.reset();
+    } catch (saveError) {
+      console.error('Unable to create appointment:', saveError);
+      setFormError(saveError.message || 'Unable to save the appointment.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filteredAppointments = (appointments || []).filter((appointment) => {
     const search = searchTerm.toLowerCase();
@@ -204,30 +258,110 @@ function AppointmentsPage() {
       <header className="appointments-header">
         <Brand />
 
-        <div className="appointments-header-user">
-          <span>Healthcare Staff</span>
-          <div className="appointments-user-avatar">A</div>
-        </div>
-      </header>
+<div className="appointments-header-user">
+            <span>Healthcare Staff</span>
 
-      <div className="appointments-container">
-        <section className="appointments-page-heading">
-          <div>
-            <span className="appointments-label">HEALTHBRIDGE SCHEDULE</span>
-            <h1>Appointments.</h1>
-            <p>
-              Schedule, review, and manage patient appointments from one
-              connected workspace.
-            </p>
+            {onLogout && (
+              <button
+                type="button"
+                className="appointments-header-button"
+                onClick={onLogout}
+              >
+                <LogOut size={15} />
+                Log out
+              </button>
+            )}
+
+            <div className="appointments-user-avatar">A</div>
           </div>
+        </header>
 
-          <button type="button" className="new-appointment-button">
-            <Plus size={17} />
-            New appointment
-          </button>
-        </section>
+        <div className="appointments-container">
+          <section className="appointments-page-heading">
+            <div>
+              <span className="appointments-label">HEALTHBRIDGE SCHEDULE</span>
+              <h1>Appointments.</h1>
+              <p>
+                Schedule, review, and manage patient appointments from one
+                connected workspace.
+              </p>
+            </div>
 
-        <section className="appointments-overview">
+            <button
+              type="button"
+              className="new-appointment-button"
+              onClick={() => {
+                setIsFormOpen((open) => !open);
+                setFormError('');
+                setNotice('');
+              }}
+            >
+              <Plus size={17} />
+              New appointment
+            </button>
+          </section>
+
+          {isFormOpen && (
+            <form className="appointment-form-card" onSubmit={handleCreateAppointment}>
+              <h2>Schedule an appointment</h2>
+
+              <div className="appointment-form-grid">
+                <label>
+                  <span>Patient</span>
+                  <select name="patientId" required defaultValue="">
+                    <option value="" disabled>
+                      Select a patient
+                    </option>
+                    {patients.map((patient) => (
+                      <option key={patient.id} value={patient.id}>
+                        {patient.name} ({patient.id})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Date</span>
+                  <input type="date" name="date" required />
+                </label>
+
+                <label>
+                  <span>Time</span>
+                  <input type="time" name="time" required defaultValue="09:00" />
+                </label>
+
+                <label>
+                  <span>Provider</span>
+                  <input type="text" name="provider" placeholder="e.g. Dr. Adebisi" />
+                </label>
+
+                <label className="appointment-form-full">
+                  <span>Reason</span>
+                  <input type="text" name="reason" placeholder="e.g. Follow-up review" />
+                </label>
+              </div>
+
+              {formError && <div className="appointment-form-error">{formError}</div>}
+
+              <div className="appointment-form-actions">
+                <button
+                  type="button"
+                  className="appointment-form-cancel"
+                  onClick={() => setIsFormOpen(false)}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="appointment-form-save" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save appointment'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {notice && <div className="appointment-form-success">{notice}</div>}
+
+          <section className="appointments-overview">
           <div className="appointments-overview-card">
             <div className="appointments-overview-icon">
               <CalendarDays size={20} />

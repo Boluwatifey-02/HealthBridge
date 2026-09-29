@@ -38,6 +38,33 @@
   font-weight: 600;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-header-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid #e2ddd6;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--charcoal);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-header-button:hover {
+  border-color: var(--burgundy);
+  color: var(--burgundy);
+  background: rgba(128, 26, 42, 0.04);
+}
+
 .dashboard-container {
   width: min(1180px, 100%);
   margin: 0 auto;

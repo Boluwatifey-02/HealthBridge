@@ -29,7 +29,9 @@ function normalizeConsultationRow(row) {
 router.get('/', async (req, res) => {
   try {
     if (isFallbackMode()) {
-      return res.json([]);
+      return res.status(503).json({
+        message: 'The HealthBridge database is unavailable. Please try again shortly.',
+      });
     }
 
     const [rows] = await query(
@@ -79,6 +81,12 @@ router.post('/', async (req, res) => {
 
     if (!consultationComplaint || !consultationDiagnosis) {
       return res.status(400).json({ message: 'Complaint and diagnosis are required.' });
+    }
+
+    if (isFallbackMode()) {
+      return res.status(503).json({
+        message: 'The HealthBridge database is unavailable. Please try again shortly.',
+      });
     }
 
     const [patientRows] = await query('SELECT id FROM patients WHERE id = ? LIMIT 1', [selectedPatientId]);

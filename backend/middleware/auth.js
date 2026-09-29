@@ -9,8 +9,12 @@ function authenticate(req, res, next) {
 
   const token = header.split(' ')[1];
 
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ message: 'Authentication is not configured on the server.' });
+  }
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'healthbridge-local-secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     return next();
   } catch (error) {

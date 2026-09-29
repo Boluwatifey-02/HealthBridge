@@ -8,18 +8,32 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-function PublicLayout({ children }) {
+function PublicLayout({ children, onLoginClick }) {
   const [page, setPage] = useState('Home');
 
   const handleLogin = () => {
-  window.location.href = '/login';
-};
+    if (onLoginClick) {
+      onLoginClick();
+      return;
+    }
+
+    window.location.href = '/login';
+  };
+
+  const handleSecurityNavigation = () => {
+    if (onLoginClick) {
+      onLoginClick();
+      return;
+    }
+
+    window.location.href = '/security';
+  };
 
   const handleNavigation = (section) => {
     setPage(section);
 
     if (section === 'Privacy' || section === 'Terms') {
-      window.location.href = '/security';
+      handleSecurityNavigation();
       return;
     }
 

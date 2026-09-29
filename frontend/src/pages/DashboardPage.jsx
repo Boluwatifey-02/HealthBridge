@@ -6,6 +6,9 @@ import {
   ArrowUpRight,
   Activity,
   Clock3,
+  Sparkles,
+  ShieldCheck,
+  LogOut,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Brand from '../components/Brand';
@@ -22,7 +25,15 @@ const defaultDashboardState = {
   recentActivity: [],
 };
 
-function DashboardPage({onPatientsClick, onAppointmentsClick, onLaboratoryClick, onPharmacyClick}) {
+function DashboardPage({
+  onPatientsClick,
+  onAppointmentsClick,
+  onLaboratoryClick,
+  onPharmacyClick,
+  onAIInsightsClick,
+  onSecurityClick,
+  onLogout,
+}) {
   const [dashboard, setDashboard] = useState(defaultDashboardState);
   const [loading, setLoading] = useState(true);
 
@@ -62,7 +73,7 @@ function DashboardPage({onPatientsClick, onAppointmentsClick, onLaboratoryClick,
           })),
         ].slice(0, 4);
 
-        setDashboard({
+        const dashboardData = {
           totalPatients: Number(summary.totalPatients ?? patients.length ?? 0),
           appointments: Number(summary.appointments ?? appointments.length ?? 0),
           pharmacyItems: Number(medicines.length ?? 0),
@@ -70,7 +81,11 @@ function DashboardPage({onPatientsClick, onAppointmentsClick, onLaboratoryClick,
           pendingLabRequests: Number(summary.pendingLabRequests ?? labRequests.filter((item) => item.status === 'Pending').length ?? 0),
           upcomingAppointments,
           recentActivity,
-        });
+        };
+
+        if (isMounted) {
+          setDashboard(dashboardData);
+        }
       } catch (error) {
         console.error('Unable to load dashboard summary:', error);
         if (isMounted) {
@@ -97,7 +112,43 @@ function DashboardPage({onPatientsClick, onAppointmentsClick, onLaboratoryClick,
 
         <div className="dashboard-header-right">
           <span>HealthBridge</span>
-          <div className="dashboard-user">A</div>
+
+          <div className="dashboard-header-actions">
+            {onAIInsightsClick && (
+              <button
+                type="button"
+                className="dashboard-header-button"
+                onClick={onAIInsightsClick}
+              >
+                <Sparkles size={15} />
+                AI Insights
+              </button>
+            )}
+
+            {onSecurityClick && (
+              <button
+                type="button"
+                className="dashboard-header-button"
+                onClick={onSecurityClick}
+              >
+                <ShieldCheck size={15} />
+                Security
+              </button>
+            )}
+
+            {onLogout && (
+              <button
+                type="button"
+                className="dashboard-header-button"
+                onClick={onLogout}
+              >
+                <LogOut size={15} />
+                Log out
+              </button>
+            )}
+
+            <div className="dashboard-user">A</div>
+          </div>
         </div>
       </header>
 

@@ -1,8 +1,16 @@
 const express = require('express');
 
 const { query, isFallbackMode } = require('../config/db');
+const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+router.use(authenticate);
+
+function databaseUnavailable(res) {
+  return res.status(503).json({
+    message: 'The HealthBridge database is unavailable. Please try again shortly.',
+  });
+}
 
 function mapPatientRow(row) {
   if (!row) {
@@ -35,8 +43,7 @@ function mapPatientRow(row) {
 router.get('/', async (req, res) => {
   try {
     if (isFallbackMode()) {
-      const { getStore } = require('../config/db');
-      return res.json(getStore().patients);
+      return databaseUnavailable(res);
     }
 
     const [rows] = await query(
@@ -71,6 +78,10 @@ router.post('/', async (req, res) => {
 
     if (!patientName) {
       return res.status(400).json({ message: 'Patient name is required.' });
+    }
+
+    if (isFallbackMode()) {
+      return databaseUnavailable(res);
     }
 
     const patientAge = Number(age) || 0;

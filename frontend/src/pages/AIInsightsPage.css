@@ -67,6 +67,17 @@
   gap: 20px;
 }
 
+.ai-insights-empty {
+  grid-column: 1 / -1;
+  background: var(--white);
+  border: 1px solid rgba(74, 18, 31, 0.12);
+  border-radius: 14px;
+  padding: 28px;
+  color: var(--charcoal-soft);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
 .ai-insight-card {
   background: var(--white);
   border: 1px solid rgba(74, 18, 31, 0.12);

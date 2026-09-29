@@ -120,19 +120,15 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { patientId, patient_id, patient, test, testName, status, date, priority, notes } = req.body || {};
+    const { patientId, patient_id, patient, test, testName, status, date, priority, notes, doctorId, doctor_id } = req.body || {};
 
-    const selectedPatientId = patientId || patient_id || (typeof patient === 'string' ? patient : '');
+    let selectedPatientId = patientId || patient_id || (typeof patient === 'string' ? patient : '');
     const selectedTestName = testName || test || 'General Laboratory Test';
     const selectedStatus = status || 'Pending';
     const requestDate = date ? formatDbDateTime(date) : formatDbDateTime(new Date());
 
     if (!selectedPatientId) {
-      const [patientRows] = await query('SELECT id FROM patients ORDER BY created_at DESC LIMIT 1');
-      if (!patientRows.length) {
-        return res.status(400).json({ message: 'A real patient is required to create a laboratory request.' });
-      }
-      selectedPatientId = patientRows[0].id;
+      return res.status(400).json({ message: 'A patient is required to create a laboratory request.' });
     }
 
     const [patientRows] = await query('SELECT id FROM patients WHERE id = ? LIMIT 1', [selectedPatientId]);
@@ -140,8 +136,9 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Selected patient was not found in the database.' });
     }
 
-    const [doctorRows] = await query('SELECT id FROM staff WHERE email = ? LIMIT 1', ['admin@healthbridge.org']);
-    const doctorId = doctorRows[0]?.id || 'STAFF-001';
+    const doctorIdentifier = doctorId || doctor_id || req.user?.id;
+    const [doctorRows] = await query('SELECT id FROM staff WHERE id = ? LIMIT 1', [doctorIdentifier]);
+    const resolvedDoctorId = doctorRows[0]?.id || 'STAFF-001';
     const labRequestId = `LAB-${Date.now().toString().slice(-8)}`;
 
     await query(
@@ -150,7 +147,7 @@ router.post('/', async (req, res) => {
       [
         labRequestId,
         selectedPatientId,
-        doctorId,
+        resolvedDoctorId,
         selectedTestName,
         requestDate,
         selectedStatus,

@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: healthbridge-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: SEED_STAFF
+        value: 'true'
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_DOCTOR_PASSWORD
+        sync: false
+      - key: SEED_RECEPTION_PASSWORD
+        sync: false

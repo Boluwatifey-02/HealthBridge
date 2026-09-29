@@ -1,25 +1,89 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Search,
   Plus,
   Users,
   ChevronRight,
   ArrowLeft,
-  UserRound,
   CalendarDays,
   Phone,
   MapPin,
   FileText,
   Activity,
-  Stethoscope, 
+  Stethoscope,
+  LogOut,
 } from 'lucide-react';
 import Brand from '../components/Brand';
+import api from '../services/api';
 import './PatientsPage.css';
 
+function isVisitThisMonth(lastVisit) {
+  if (!lastVisit) {
+    return false;
+  }
 
-function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, error, onRetryLoad}) {
+  const parsed = new Date(lastVisit);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  const now = new Date();
+  return parsed.getFullYear() === now.getFullYear() && parsed.getMonth() === now.getMonth();
+}
+
+function PatientsPage({
+  patients,
+  onRegisterPatient,
+  onClinicalCare,
+  isLoading,
+  error,
+  onRetryLoad,
+  onLogout,
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedPatient?.id) {
+      setHistory([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadHistory = async () => {
+      setIsHistoryLoading(true);
+
+      try {
+        const consultations = await api.getConsultations();
+        const matching = (Array.isArray(consultations) ? consultations : []).filter(
+          (consultation) => consultation.patientId === selectedPatient.id,
+        );
+
+        if (isMounted) {
+          setHistory(matching);
+        }
+      } catch (loadError) {
+        console.error('Unable to load patient clinical history:', loadError);
+        if (isMounted) {
+          setHistory([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsHistoryLoading(false);
+        }
+      }
+    };
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedPatient?.id]);
 
   const filteredPatients = (patients || []).filter((patient) => {
     const search = searchTerm.toLowerCase();
@@ -40,6 +104,18 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
 
           <div className="patients-header-user">
             <span>Healthcare Staff</span>
+
+            {onLogout && (
+              <button
+                type="button"
+                className="patients-header-button"
+                onClick={onLogout}
+              >
+                <LogOut size={15} />
+                Log out
+              </button>
+            )}
+
             <div className="patients-user-avatar">A</div>
           </div>
         </header>
@@ -64,7 +140,7 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
 
           <section className="patient-profile-header">
             <div className="patient-profile-avatar">
-              {selectedPatient.name.charAt(0)}
+              {(selectedPatient.name || 'U').charAt(0)}
             </div>
 
             <div>
@@ -143,32 +219,55 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
               </div>
             </div>
 
-            <div className="medical-history-row">
-              <div className="history-date">08 Sep 2026</div>
+            {history.map((consultation) => (
+            <div className="medical-history-row" key={consultation.id}>
+              <div className="history-date">
+                {new Date(consultation.date).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </div>
 
               <div>
-                <strong>Routine consultation</strong>
+                <strong>{consultation.diagnosis || 'Clinical consultation'}</strong>
                 <span>
-                  Patient reviewed for {selectedPatient.condition}.
-                  Treatment and follow-up instructions provided.
+                  {consultation.complaint || 'Consultation recorded.'}
+                  {consultation.treatment ? ` ${consultation.treatment}` : ''}
                 </span>
               </div>
 
               <span className="history-status">Completed</span>
             </div>
+            ))}
 
-            <div className="medical-history-row">
-              <div className="history-date">15 Aug 2026</div>
+            {isHistoryLoading && (
+              <div className="medical-history-row">
+                <div className="history-date">—</div>
 
-              <div>
-                <strong>Follow-up visit</strong>
-                <span>
-                  Previous condition reviewed and patient progress recorded.
-                </span>
+                <div>
+                  <strong>Loading clinical history</strong>
+                  <span>Retrieving consultations from the database.</span>
+                </div>
+
+                <span className="history-status">Pending</span>
               </div>
+            )}
 
-              <span className="history-status">Completed</span>
-            </div>
+            {!isHistoryLoading && history.length === 0 && (
+              <div className="medical-history-row">
+                <div className="history-date">—</div>
+
+                <div>
+                  <strong>No consultations recorded</strong>
+                  <span>
+                    Saved clinical consultations for this patient will appear here.
+                  </span>
+                </div>
+
+                <span className="history-status">Pending</span>
+              </div>
+            )}
           </section>
         </div>
       </main>
@@ -212,7 +311,7 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
 
             <div>
               <span>Total patients</span>
-              <strong>1,248</strong>
+              <strong>{isLoading ? '—' : (patients || []).length.toLocaleString()}</strong>
             </div>
           </div>
 
@@ -223,7 +322,11 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
 
             <div>
               <span>Active records</span>
-              <strong>1,186</strong>
+              <strong>
+                {isLoading
+                  ? '—'
+                  : (patients || []).filter((patient) => patient.status !== 'Inactive').length.toLocaleString()}
+              </strong>
             </div>
           </div>
 
@@ -234,7 +337,9 @@ function PatientsPage({patients, onRegisterPatient, onClinicalCare, isLoading, e
 
             <div>
               <span>Visits this month</span>
-              <strong>326</strong>
+              <strong>
+                {isLoading ? '—' : (patients || []).filter((patient) => isVisitThisMonth(patient.lastVisit)).length.toLocaleString()}
+              </strong>
             </div>
           </div>
         </section>

@@ -10,10 +10,19 @@ import FAQSection from '../components/FAQSection';
 import ContactSection from '../components/ContactSection';
 import './LandingPage.css';
 
-function LandingPage() {
+function LandingPage({ onLoginClick }) {
+  const goToLogin = () => {
+    if (onLoginClick) {
+      onLoginClick();
+      return;
+    }
+
+    window.location.href = '/login';
+  };
+
   return (
-    <PublicLayout>
-      <Hero onGetStarted={() => (window.location.href = '/login')} />
+    <PublicLayout onLoginClick={goToLogin}>
+      <Hero onGetStarted={goToLogin} />
       <AboutSection />
       <FeaturesSection />
       <ServicesSection />

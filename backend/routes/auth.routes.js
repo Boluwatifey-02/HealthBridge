@@ -21,10 +21,19 @@ router.post('/login', async (req, res) => {
   }
 
   const storedHash = user.passwordHash || user.password_hash;
+
+  if (!storedHash) {
+    return res.status(401).json({ message: 'Invalid email or password.' });
+  }
+
   const isValid = await bcrypt.compare(password, storedHash);
 
   if (!isValid) {
     return res.status(401).json({ message: 'Invalid email or password.' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ message: 'Authentication is not configured on the server.' });
   }
 
   const token = jwt.sign(
@@ -35,7 +44,7 @@ router.post('/login', async (req, res) => {
       role: user.role,
       branch: user.branch || user.branch_id,
     },
-    process.env.JWT_SECRET || 'healthbridge-local-secret',
+    process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
   );
 

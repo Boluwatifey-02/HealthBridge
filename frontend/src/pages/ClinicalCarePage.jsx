@@ -40,12 +40,32 @@ function ClinicalCarePage({ patient, onBack, onConsultationSaved }) {
       setSubmitError('');
       setIsSubmitting(true);
 
+      const vitals = [
+      ['Blood pressure', formData.get('bloodPressure')],
+      ['Temperature', formData.get('temperature')],
+      ['Pulse rate', formData.get('pulse')],
+      ['Weight', formData.get('weight')],
+    ]
+      .map(([label, value]) => `${label}: ${String(value || '').trim() || 'Not recorded'}`)
+      .join(' | ');
+
+    const symptoms = String(formData.get('symptoms') || '').trim();
+    const notes = String(formData.get('notes') || '').trim();
+
+    const clinicalNotes = [
+      symptoms ? `Symptoms: ${symptoms}` : '',
+      `Vitals - ${vitals}`,
+      notes,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
       const consultation = {
         patientId: patient.id,
         complaint,
         diagnosis,
         treatment: String(formData.get('treatment') || '').trim() || 'Routine management plan',
-        notes: String(formData.get('notes') || '').trim(),
+        notes: clinicalNotes,
         followUp: String(formData.get('followUp') || '').trim(),
         date: new Date().toISOString(),
       };

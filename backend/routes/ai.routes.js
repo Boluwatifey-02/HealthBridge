@@ -1,8 +1,10 @@
 const express = require('express');
 
 const { query, isFallbackMode } = require('../config/db');
+const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+router.use(authenticate);
 
 function normalizePhone(value) {
   return String(value || '').replace(/\D+/g, '').slice(-8);
@@ -11,7 +13,9 @@ function normalizePhone(value) {
 router.get('/', async (req, res) => {
   try {
     if (isFallbackMode()) {
-      return res.json([]);
+      return res.status(503).json({
+        message: 'The HealthBridge database is unavailable. Please try again shortly.',
+      });
     }
 
     const [patientRows] = await query(

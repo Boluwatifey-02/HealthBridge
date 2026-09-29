@@ -8,69 +8,13 @@ import {
   CheckCircle2,
   Pill,
   Clock3,
+  LogOut,
 } from 'lucide-react';
 import Brand from '../components/Brand';
 import api from '../services/api';
 import './PharmacyPage.css';
 
-const initialMedicines = [
-  {
-    id: 'MED-1001',
-    name: 'Paracetamol 500mg',
-    category: 'Pain Relief',
-    stock: 240,
-    unit: 'tablets',
-    reorderLevel: 50,
-    status: 'In stock',
-  },
-  {
-    id: 'MED-1002',
-    name: 'Amoxicillin 500mg',
-    category: 'Antibiotic',
-    stock: 85,
-    unit: 'capsules',
-    reorderLevel: 30,
-    status: 'In stock',
-  },
-  {
-    id: 'MED-1003',
-    name: 'Artemether/Lumefantrine',
-    category: 'Antimalarial',
-    stock: 42,
-    unit: 'packs',
-    reorderLevel: 50,
-    status: 'Low stock',
-  },
-  {
-    id: 'MED-1004',
-    name: 'Metformin 500mg',
-    category: 'Diabetes',
-    stock: 120,
-    unit: 'tablets',
-    reorderLevel: 40,
-    status: 'In stock',
-  },
-  {
-    id: 'MED-1005',
-    name: 'Salbutamol Inhaler',
-    category: 'Respiratory',
-    stock: 18,
-    unit: 'inhalers',
-    reorderLevel: 20,
-    status: 'Low stock',
-  },
-  {
-    id: 'MED-1006',
-    name: 'Cetirizine 10mg',
-    category: 'Allergy',
-    stock: 96,
-    unit: 'tablets',
-    reorderLevel: 25,
-    status: 'In stock',
-  },
-];
-
-function PharmacyPage({ onBack }) {
+function PharmacyPage({ onBack, onLogout }) {
   const [medicines, setMedicines] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -105,25 +49,26 @@ function PharmacyPage({ onBack }) {
 
     return medicines.filter(
       (medicine) =>
-        medicine.name.toLowerCase().includes(query) ||
-        medicine.category.toLowerCase().includes(query) ||
-        medicine.id.toLowerCase().includes(query),
+        String(medicine.name || '').toLowerCase().includes(query) ||
+        String(medicine.category || '').toLowerCase().includes(query) ||
+        String(medicine.id || '').toLowerCase().includes(query),
     );
   }, [medicines, searchTerm]);
 
   const totalItems = medicines.length;
   const lowStockItems = medicines.filter(
-    (medicine) => medicine.stock <= medicine.reorderLevel,
+    (medicine) => Number(medicine.stock) <= Number(medicine.reorderLevel),
   ).length;
   const totalUnits = medicines.reduce(
-    (total, medicine) => total + medicine.stock,
+    (total, medicine) => total + Number(medicine.stock || 0),
     0,
   );
 
   const handleAddMedicine = async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const stock = Number(formData.get('stock') || 0);
     const reorderLevel = Number(formData.get('reorderLevel') || 0);
     const unit = String(formData.get('unit') || '').trim();
@@ -143,12 +88,11 @@ function PharmacyPage({ onBack }) {
         quantity: stock,
         unit,
         reorderLevel,
-        strength: unit || 'Standard dose',
       });
 
       setMedicines((currentMedicines) => [created, ...currentMedicines]);
       setShowForm(false);
-      event.currentTarget.reset();
+      form.reset();
     } catch (createError) {
       console.error('Unable to add medicine through backend:', createError);
       setError(createError.message || 'Unable to add medicine to the database.');
@@ -169,6 +113,17 @@ function PharmacyPage({ onBack }) {
           </button>
 
           <Brand />
+
+          {onLogout && (
+            <button
+              type="button"
+              className="pharmacy-back-button"
+              onClick={onLogout}
+            >
+              <LogOut size={17} />
+              Log out
+            </button>
+          )}
         </div>
       </header>
 

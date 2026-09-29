@@ -1,5 +1,16 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const AUTH_TOKEN_KEY = 'healthbridge_auth_token';
+const UNAUTHORIZED_EVENT = 'healthbridge:unauthorized';
+
+const DEFAULT_API_URL = '/api';
+const configuredApiUrl = String(import.meta.env.VITE_API_URL || '').trim();
+
+if (configuredApiUrl && /^(https?:\/\/localhost|127\.0\.0\.1)/.test(configuredApiUrl)) {
+  console.warn(
+    'VITE_API_URL points at a local development host. Set VITE_API_URL to the deployed backend URL for production builds.'
+  );
+}
+
+const API_BASE_URL = (configuredApiUrl || DEFAULT_API_URL).replace(/\/+$/, '');
 
 function getStoredToken() {
   if (typeof window === 'undefined') {
@@ -39,6 +50,11 @@ async function request(endpoint, options = {}) {
     ...restOptions,
   });
 
+  if (response.status === 401) {
+    clearStoredToken();
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed.' }));
     throw new Error(error.message || 'Request failed.');
@@ -46,6 +62,8 @@ async function request(endpoint, options = {}) {
 
   return response.json();
 }
+
+export const UNAUTHORIZED_EVENT_NAME = UNAUTHORIZED_EVENT;
 
 export const api = {
   getToken: getStoredToken,

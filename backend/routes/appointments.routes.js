@@ -51,18 +51,9 @@ function normalizeAppointmentRow(row) {
 router.get('/', async (req, res) => {
   try {
     if (isFallbackMode()) {
-      const { getStore } = require('../config/db');
-      return res.json(getStore().appointments.map((appointment) => normalizeAppointmentRow({
-        id: appointment.id,
-        patient_name: appointment.patient,
-        patient_id: appointment.patientId || appointment.patient_id || 'N/A',
-        doctor_name: appointment.provider || 'Dr. HealthBridge',
-        reason: appointment.type || appointment.reason || 'Consultation',
-        status: appointment.status || 'Scheduled',
-        appointment_date: appointment.date,
-        appointment_time: appointment.time,
-        notes: appointment.notes || '',
-      })));
+      return res.status(503).json({
+        message: 'The HealthBridge database is unavailable. Please try again shortly.',
+      });
     }
 
     const [rows] = await query(
@@ -116,6 +107,12 @@ router.post('/', async (req, res) => {
 
     if (!appointmentDateValue || !appointmentTimeValue) {
       return res.status(400).json({ message: 'Appointment date and time are required.' });
+    }
+
+    if (isFallbackMode()) {
+      return res.status(503).json({
+        message: 'The HealthBridge database is unavailable. Please try again shortly.',
+      });
     }
 
     const [patientRows] = await query('SELECT id FROM patients WHERE id = ? LIMIT 1', [selectedPatientId]);

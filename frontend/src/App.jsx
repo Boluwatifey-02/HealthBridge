@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -10,69 +10,37 @@ import PharmacyPage from './pages/PharmacyPage';
 import LaboratoryPage from './pages/LaboratoryPage';
 import AIInsightsPage from './pages/AIInsightsPage';
 import SecurityPage from './pages/SecurityPage';
-import api from './services/api';
-const initialPatients = [
-  {
-    id: 'HB-10248',
-    name: 'Amina Yusuf',
-    age: 34,
-    gender: 'Female',
-    phone: '+234 803 421 7782',
-    condition: 'Hypertension',
-    lastVisit: '08 Sep 2026',
-    status: 'Active',
-    address: 'Ikeja, Lagos',
-    allergies: 'None',
-  },
-  {
-    id: 'HB-10247',
-    name: 'David Okafor',
-    age: 42,
-    gender: 'Male',
-    phone: '+234 806 214 9031',
-    condition: 'Type 2 Diabetes',
-    lastVisit: '07 Sep 2026',
-    status: 'Active',
-    address: 'Surulere, Lagos',
-    allergies: 'Penicillin',
-  },
-  {
-    id: 'HB-10246',
-    name: 'Chioma Eze',
-    age: 28,
-    gender: 'Female',
-    phone: '+234 809 552 1840',
-    condition: 'Asthma',
-    lastVisit: '06 Sep 2026',
-    status: 'Active',
-    address: 'Yaba, Lagos',
-    allergies: 'Dust',
-  },
-  {
-    id: 'HB-10245',
-    name: 'Ibrahim Musa',
-    age: 51,
-    gender: 'Male',
-    phone: '+234 802 771 4562',
-    condition: 'Malaria',
-    lastVisit: '05 Sep 2026',
-    status: 'Active',
-    address: 'Agege, Lagos',
-    allergies: 'None',
-  },
-  {
-    id: 'HB-10244',
-    name: 'Grace Adeyemi',
-    age: 37,
-    gender: 'Female',
-    phone: '+234 805 334 9201',
-    condition: 'Migraine',
-    lastVisit: '03 Sep 2026',
-    status: 'Active',
-    address: 'Maryland, Lagos',
-    allergies: 'Ibuprofen',
-  },
-];
+import api, { UNAUTHORIZED_EVENT_NAME } from './services/api';
+
+const ROUTES = {
+  '/': 'home',
+  '/login': 'login',
+  '/dashboard': 'dashboard',
+  '/patients': 'patients',
+  '/appointments': 'appointments',
+  '/patient-registration': 'patient-registration',
+  '/clinical-care': 'clinical-care',
+  '/pharmacy': 'pharmacy',
+  '/laboratory': 'laboratory',
+  '/ai-insights': 'ai-insights',
+  '/security': 'security',
+};
+
+const PAGE_PATHS = Object.entries(ROUTES).reduce((accumulator, [path, page]) => {
+  accumulator[page] = path;
+  return accumulator;
+}, {});
+
+function resolvePage() {
+  const path = window.location.pathname;
+  const matched = ROUTES[path];
+
+  if (matched) {
+    return matched;
+  }
+
+  return api.getToken() ? 'dashboard' : 'home';
+}
 
 function App() {
   const [patients, setPatients] = useState([]);
@@ -80,25 +48,34 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [patientError, setPatientError] = useState('');
   const [patientLoading, setPatientLoading] = useState(false);
-  const [page, setPage] = useState(() => {
-    const path = window.location.pathname;
+  const [page, setPage] = useState(resolvePage);
 
-    if (path === '/login') return 'login';
-    if (path === '/dashboard') return 'dashboard';
-    if (path === '/patients') return 'patients';
-    if (path === '/appointments') return 'appointments';
-    if (path === '/patient-registration') return 'patient-registration';
-    if (path === '/clinical-care') return 'clinical-care';
-    if (path === '/pharmacy') return 'pharmacy';
-    if (path === '/laboratory') return 'laboratory';
-    if (path === '/ai-insights') return 'ai-insights';
-    if (path === '/security') return 'security';
-    if (api.getToken()) return 'dashboard';
+  const navigate = useCallback((nextPage) => {
+    const path = PAGE_PATHS[nextPage] || '/';
+    window.history.pushState({}, '', path);
+    setPage(nextPage);
+  }, []);
 
-    return 'home';
-  });
+  const handleUnauthorized = useCallback(() => {
+    setAuthError('Your session has ended. Please sign in again.');
+    setPage('login');
+  }, []);
 
-  const loadPatients = async () => {
+  useEffect(() => {
+    const onPopState = () => {
+      setPage(resolvePage());
+    };
+
+    window.addEventListener('popstate', onPopState);
+    window.addEventListener(UNAUTHORIZED_EVENT_NAME, handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener(UNAUTHORIZED_EVENT_NAME, handleUnauthorized);
+    };
+  }, [handleUnauthorized]);
+
+  const loadPatients = useCallback(async () => {
     if (!api.getToken()) {
       setPatients([]);
       setPatientError('');
@@ -118,13 +95,13 @@ function App() {
     } finally {
       setPatientLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (page === 'patients' || page === 'patient-registration') {
       loadPatients();
     }
-  }, [page]);
+  }, [page, loadPatients]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -142,145 +119,138 @@ function App() {
       const response = await api.login({ email, password });
       api.setToken(response.token);
       setAuthError('');
-
-      window.history.pushState({}, '', '/dashboard');
-      setPage('dashboard');
+      navigate('dashboard');
     } catch (error) {
       setAuthError(error.message || 'Invalid email or password.');
       api.clearToken();
     }
   };
 
-  const openPatients = () => {
+  const handleLogout = useCallback(() => {
+    api.clearToken();
+    setPatients([]);
     setSelectedPatient(null);
-    window.history.pushState({}, '', '/patients');
-    setPage('patients');
-  };
+    setAuthError('');
+    navigate('login');
+  }, [navigate]);
 
-  const openPatientRegistration = () => {
-  window.history.pushState({}, '', '/patient-registration');
-  setPage('patient-registration');
-};
+  const openPatients = useCallback(() => {
+    setSelectedPatient(null);
+    navigate('patients');
+  }, [navigate]);
 
-  const openClinicalCare = (patient) => {
-  setSelectedPatient(patient);
+  const openPatientRegistration = useCallback(() => {
+    navigate('patient-registration');
+  }, [navigate]);
 
-  window.history.pushState({}, '', '/clinical-care');
-  setPage('clinical-care');
-};
+  const openClinicalCare = useCallback((patient) => {
+    setSelectedPatient(patient);
+    navigate('clinical-care');
+  }, [navigate]);
 
   const handlePatientRegistered = async (patient) => {
     try {
       const createdPatient = await api.createPatient(patient);
       setPatients((currentPatients) => [createdPatient, ...currentPatients]);
-      window.history.pushState({}, '', '/patients');
-      setPage('patients');
-      return;
+      navigate('patients');
     } catch (error) {
       console.error('Unable to register patient via backend:', error);
       throw error;
     }
   };
 
-  const openAppointments = () => {
-    window.history.pushState({}, '', '/appointments');
-    setPage('appointments');
-  };
+  const openAppointments = useCallback(() => navigate('appointments'), [navigate]);
+  const openDashboard = useCallback(() => navigate('dashboard'), [navigate]);
+  const openLaboratory = useCallback(() => navigate('laboratory'), [navigate]);
+  const openAIInsights = useCallback(() => navigate('ai-insights'), [navigate]);
+  const openPharmacy = useCallback(() => navigate('pharmacy'), [navigate]);
+  const openSecurity = useCallback(() => navigate('security'), [navigate]);
+  const openLogin = useCallback(() => {
+    setAuthError('');
+    navigate('login');
+  }, [navigate]);
 
-  const openDashboard = () => {
-  window.history.pushState({}, '', '/dashboard');
-  setPage('dashboard');
-};
+  const isAuthenticated = Boolean(api.getToken());
 
-const openLaboratory = () => {
-  window.history.pushState({}, '', '/laboratory');
-  setPage('laboratory');
-};
-
-const openAIInsights = () => {
-  window.history.pushState({}, '', '/ai-insights');
-  setPage('ai-insights');
-};
-
-const openPharmacy = () => {
-  window.history.pushState({}, '', '/pharmacy');
-  setPage('pharmacy');
-};
-
-const openSecurity = () => {
-  window.history.pushState({}, '', '/security');
-  setPage('security');
-};
+  if (page === 'home') {
+    return <LandingPage onLoginClick={openLogin} />;
+  }
 
   if (page === 'login') {
     return <LoginPage onLogin={handleLogin} error={authError} />;
   }
 
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} error={authError} />;
+  }
+
   if (page === 'dashboard') {
-    return( 
-    <DashboardPage 
-    onPatientsClick={openPatients}
-    onAppointmentsClick={openAppointments}
-    onLaboratoryClick={openLaboratory}
-    onPharmacyClick={openPharmacy}
-    />
+    return (
+      <DashboardPage
+        onPatientsClick={openPatients}
+        onAppointmentsClick={openAppointments}
+        onLaboratoryClick={openLaboratory}
+        onPharmacyClick={openPharmacy}
+        onAIInsightsClick={openAIInsights}
+        onSecurityClick={openSecurity}
+        onLogout={handleLogout}
+      />
     );
   }
 
   if (page === 'patients') {
-    return(
-       <PatientsPage
-       patients={patients}
-       onRegisterPatient={openPatientRegistration}
-       onClinicalCare={openClinicalCare}
-       isLoading={patientLoading}
-       error={patientError}
-       onRetryLoad={loadPatients}
-       />
+    return (
+      <PatientsPage
+        patients={patients}
+        onRegisterPatient={openPatientRegistration}
+        onClinicalCare={openClinicalCare}
+        isLoading={patientLoading}
+        error={patientError}
+        onRetryLoad={loadPatients}
+        onLogout={handleLogout}
+      />
     );
   }
 
   if (page === 'patient-registration') {
-  return (
-    <PatientRegistrationPage
-      onBack={openPatients}
-      onPatientRegistered={handlePatientRegistered}
-    />
-  );
-}
-
-if (page === 'clinical-care') {
-  return (
-    <ClinicalCarePage
-      patient={selectedPatient}
-      onBack={openPatients}
-    />
-  );
-}
-
-if (page === 'appointments') {
-    return <AppointmentsPage />;
+    return (
+      <PatientRegistrationPage
+        onBack={openPatients}
+        onPatientRegistered={handlePatientRegistered}
+      />
+    );
   }
-  
+
+  if (page === 'clinical-care') {
+    return (
+      <ClinicalCarePage
+        patient={selectedPatient}
+        onBack={openPatients}
+      />
+    );
+  }
+
+  if (page === 'appointments') {
+    return <AppointmentsPage onLogout={handleLogout} />;
+  }
+
   if (page === 'pharmacy') {
-  return <PharmacyPage 
-  onBack={openDashboard} />;
-}
+    return <PharmacyPage onBack={openDashboard} onLogout={handleLogout} />;
+  }
 
-if (page === 'laboratory') {
-  return <LaboratoryPage onBack={openDashboard} />;
-}
+  if (page === 'laboratory') {
+    return <LaboratoryPage onBack={openDashboard} onLogout={handleLogout} />;
+  }
 
-if (page === 'ai-insights') {
-  return <AIInsightsPage onBack={openDashboard} />;
-}
+  if (page === 'ai-insights') {
+    return <AIInsightsPage onBack={openDashboard} onLogout={handleLogout} />;
+  }
 
-if (page === 'security') {
-  return <SecurityPage onBack={openDashboard} />;
-}
+  if (page === 'security') {
+    return <SecurityPage onBack={openDashboard} onLogout={handleLogout} />;
+  }
 
-  return <LandingPage />;
-  
+  return <LandingPage onLoginClick={openLogin} />;
 }
 
 export default App;
