@@ -5,6 +5,13 @@
     "frontend"
   ],
   "scripts": {
-    "build": "npm --prefix frontend run build"
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "test:api": "node backend/scripts/acceptanceTest.js",
+    "test:web": "node frontend/scripts/browserCheck.cjs",
+    "test": "npm run test:api && npm run test:web"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
   }
 }
