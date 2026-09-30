@@ -284,6 +284,31 @@ async function main() {
     },
   ];
 
+  // Optional SMTP settings. Absent by default, which makes the backend write
+  // reset links to the server log instead of emailing them. Populate these in
+  // deploy/render-secrets.env to switch on real email delivery.
+  const smtpVars = [
+    ['SMTP_HOST', values.SMTP_HOST],
+    ['SMTP_PORT', values.SMTP_PORT],
+    ['SMTP_SECURE', values.SMTP_SECURE],
+    ['SMTP_USER', values.SMTP_USER],
+    ['SMTP_PASS', values.SMTP_PASS],
+    ['SMTP_FROM', values.SMTP_FROM],
+  ]
+    .filter(([, value]) => value)
+    .map(([key, value]) => ({
+      key,
+      value,
+      type: key === 'SMTP_PASS' ? 'secret' : 'plain',
+    }));
+
+  if (smtpVars.length) {
+    envVars.push(...smtpVars);
+    console.log(`SMTP configured (${smtpVars.map((v) => v.key).join(', ')}) - reset links will be emailed.`);
+  } else {
+    console.log('SMTP not configured - password reset links will be written to the server log.');
+  }
+
   await renderApi(apiKey, `/services/${serviceId}/env-vars`, {
     method: 'PUT',
     body: JSON.stringify(envVars),

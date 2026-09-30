@@ -9,6 +9,7 @@ const { initializeDatabase, isFallbackMode, getDatabaseError, query } = require(
 const errorHandler = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth.routes');
+const passwordResetRoutes = require('./routes/passwordReset.routes');
 const patientRoutes = require('./routes/patients.routes');
 const appointmentRoutes = require('./routes/appointments.routes');
 const consultationRoutes = require('./routes/consultations.routes');
@@ -67,8 +68,18 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Reset endpoints are rate limited harder: a request mints a usable token.
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(generalLimiter);
 app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/forgot-password', resetLimiter);
+app.use('/api/auth/reset-password', resetLimiter);
 
 app.get('/api/health', (req, res) => {
   const healthy = !isFallbackMode();
@@ -81,6 +92,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', passwordResetRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/consultations', consultationRoutes);

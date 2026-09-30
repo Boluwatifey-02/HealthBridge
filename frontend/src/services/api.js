@@ -74,6 +74,17 @@ export const api = {
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
   }),
+  forgotPassword: (email) => request('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    headers: { 'Content-Type': 'application/json' },
+  }),
+  verifyResetToken: (token) => request(`/auth/reset-password/verify?token=${encodeURIComponent(token)}`),
+  resetPassword: (payload) => request('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  }),
   health: () => request('/health'),
   getPatients: () => request('/patients'),
   createPatient: (payload) => request('/patients', { method: 'POST', body: JSON.stringify(payload) }),

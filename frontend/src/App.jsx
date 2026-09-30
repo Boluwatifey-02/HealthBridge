@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
@@ -15,6 +17,8 @@ import api, { UNAUTHORIZED_EVENT_NAME } from './services/api';
 const ROUTES = {
   '/': 'home',
   '/login': 'login',
+  '/forgot-password': 'forgot-password',
+  '/reset-password': 'reset-password',
   '/dashboard': 'dashboard',
   '/patients': 'patients',
   '/appointments': 'appointments',
@@ -40,6 +44,11 @@ function resolvePage() {
   }
 
   return api.getToken() ? 'dashboard' : 'home';
+}
+
+// The reset link carries its single-use token in the query string.
+function readResetToken() {
+  return new URLSearchParams(window.location.search).get('token') || '';
 }
 
 function App() {
@@ -170,6 +179,21 @@ function App() {
     navigate('login');
   }, [navigate]);
 
+  const openForgotPassword = useCallback(() => {
+    setAuthError('');
+    navigate('forgot-password');
+  }, [navigate]);
+
+  const openResetPassword = useCallback(() => {
+    setAuthError('');
+    navigate('reset-password');
+  }, [navigate]);
+
+  const finishPasswordReset = useCallback(() => {
+    setAuthError('');
+    navigate('login');
+  }, [navigate]);
+
   const isAuthenticated = Boolean(api.getToken());
 
   if (page === 'home') {
@@ -177,11 +201,26 @@ function App() {
   }
 
   if (page === 'login') {
-    return <LoginPage onLogin={handleLogin} error={authError} />;
+    return <LoginPage onLogin={handleLogin} onForgotPassword={openForgotPassword} error={authError} />;
+  }
+
+  // These two pages must stay reachable whether or not a session exists.
+  if (page === 'forgot-password') {
+    return <ForgotPasswordPage onBackToLogin={openLogin} />;
+  }
+
+  if (page === 'reset-password') {
+    return (
+      <ResetPasswordPage
+        token={readResetToken()}
+        onBackToLogin={openResetPassword}
+        onResetComplete={finishPasswordReset}
+      />
+    );
   }
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} error={authError} />;
+    return <LoginPage onLogin={handleLogin} onForgotPassword={openForgotPassword} error={authError} />;
   }
 
   if (page === 'dashboard') {

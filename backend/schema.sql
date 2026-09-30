@@ -151,6 +151,21 @@ CREATE TABLE IF NOT EXISTS patient_documents (
   FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
 
+-- Only the SHA-256 hash of a reset token is stored, so a database leak cannot be
+-- replayed as a working reset link. One active token per staff member: issuing a
+-- new request invalidates any earlier one.
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id VARCHAR(50) PRIMARY KEY,
+  staff_id VARCHAR(50) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_password_reset_token_hash (token_hash),
+  KEY idx_password_reset_staff (staff_id)
+);
+
 INSERT INTO branches (id, name, location)
 SELECT 1, 'Main Centre', 'Lagos'
 WHERE NOT EXISTS (SELECT 1 FROM branches WHERE id = 1);

@@ -3,7 +3,7 @@ import { Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react';
 import Brand from '../components/Brand';
 import './LoginPage.css';
 
-function LoginPage({ onLogin, error }) {
+function LoginPage({ onLogin, onForgotPassword, error }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,7 +45,9 @@ function LoginPage({ onLogin, error }) {
           <div className="form-field">
             <div className="password-label">
               <label htmlFor="password">Password</label>
-              <button type="button">Forgot password?</button>
+              <button type="button" onClick={onForgotPassword}>
+                Forgot password?
+              </button>
             </div>
 
             <div className="password-input">
