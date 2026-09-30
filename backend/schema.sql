@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   id VARCHAR(50) PRIMARY KEY,
   patient_id VARCHAR(50),
   doctor_id VARCHAR(50),
+  provider VARCHAR(150),
   appointment_date DATE NOT NULL,
   appointment_time TIME NOT NULL,
   reason VARCHAR(255),

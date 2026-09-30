@@ -86,6 +86,17 @@ async function initializeDatabase() {
       await pool.query(statement);
     }
 
+    // CREATE TABLE IF NOT EXISTS leaves an already-created table untouched, so
+    // columns added to schema.sql after the first deploy have to be applied
+    // separately. These are idempotent and safe to run on every start.
+    const additiveMigrations = [
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS provider VARCHAR(150)',
+    ];
+
+    for (const migration of additiveMigrations) {
+      await pool.query(migration);
+    }
+
     databaseAvailable = true;
     databaseError = null;
     console.log('MySQL database connection successful and HealthBridge schema verified.');

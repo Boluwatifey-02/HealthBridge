@@ -32,12 +32,16 @@ function normalizeAppointmentRow(row) {
     return null;
   }
 
+  // The clinician named when the appointment was booked wins. Older rows have no
+  // provider value, so they fall back to the linked staff record.
+  const clinician = row.provider || row.doctor_name || 'Dr. HealthBridge';
+
   return {
     id: row.id,
     patient: row.patient_name || row.full_name || 'Unknown patient',
     patientId: row.patient_id || 'N/A',
-    doctor: row.doctor_name || row.provider || 'Dr. HealthBridge',
-    provider: row.doctor_name || row.provider || 'Dr. HealthBridge',
+    doctor: clinician,
+    provider: clinician,
     department: 'Clinical Care',
     type: row.reason || 'Consultation',
     reason: row.reason || 'Consultation',
@@ -48,6 +52,14 @@ function normalizeAppointmentRow(row) {
   };
 }
 
+const APPOINTMENT_SELECT = `SELECT a.id, a.patient_id, a.appointment_date, a.appointment_time,
+                                  a.reason, a.status, a.notes, a.provider,
+                                  p.full_name AS patient_name,
+                                  s.full_name AS doctor_name
+                           FROM appointments a
+                           LEFT JOIN patients p ON p.id = a.patient_id
+                           LEFT JOIN staff s ON s.id = a.doctor_id`;
+
 router.get('/', async (req, res) => {
   try {
     if (isFallbackMode()) {
@@ -57,12 +69,7 @@ router.get('/', async (req, res) => {
     }
 
     const [rows] = await query(
-      `SELECT a.id, a.patient_id, a.appointment_date, a.appointment_time, a.reason, a.status, a.notes,
-              p.full_name AS patient_name,
-              s.full_name AS doctor_name
-       FROM appointments a
-       LEFT JOIN patients p ON p.id = a.patient_id
-       LEFT JOIN staff s ON s.id = a.doctor_id
+      `${APPOINTMENT_SELECT}
        ORDER BY a.appointment_date DESC, a.appointment_time DESC`
     );
 
@@ -123,15 +130,19 @@ router.post('/', async (req, res) => {
 
     const [doctorRows] = await query('SELECT id FROM staff WHERE id = ? LIMIT 1', [doctorIdentifier]);
     const resolvedDoctorId = doctorRows[0]?.id || 'STAFF-001';
+    // Record the clinician the user actually named. Without this the appointment
+    // is silently attributed to the signed-in staff member instead.
+    const providerName = String(provider || '').trim().slice(0, 150);
     const appointmentId = `APT-${Date.now().toString().slice(-8)}`;
 
     await query(
-      `INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, reason, status, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO appointments (id, patient_id, doctor_id, provider, appointment_date, appointment_time, reason, status, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         appointmentId,
         selectedPatientId,
         resolvedDoctorId,
+        providerName || null,
         appointmentDateValue,
         appointmentTimeValue,
         appointmentReason,
@@ -141,12 +152,7 @@ router.post('/', async (req, res) => {
     );
 
     const [rows] = await query(
-      `SELECT a.id, a.patient_id, a.appointment_date, a.appointment_time, a.reason, a.status, a.notes,
-              p.full_name AS patient_name,
-              s.full_name AS doctor_name
-       FROM appointments a
-       LEFT JOIN patients p ON p.id = a.patient_id
-       LEFT JOIN staff s ON s.id = a.doctor_id
+      `${APPOINTMENT_SELECT}
        WHERE a.id = ?`,
       [appointmentId]
     );
