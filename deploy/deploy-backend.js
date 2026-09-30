@@ -278,7 +278,9 @@ async function main() {
     { key: 'SEED_RECEPTION_PASSWORD', value: receptionPassword, type: 'secret' },
     {
       key: 'FRONTEND_ORIGIN',
-      value: values.FRONTEND_ORIGIN || 'https://healthbridge-boluwatife-ayomides-projects.vercel.app',
+      value:
+        values.FRONTEND_ORIGIN ||
+        'https://healthbridge-seven-eosin.vercel.app',
     },
   ];
 
