@@ -141,7 +141,7 @@ async function main() {
   const pharmacistToken = pharmacist.token;
 
   // ------------------------------------------------------------- RBAC
-  const labPatients = await api('/patients', { token: labToken });
+  const labPatients = await api('/patients?format=envelope', { token: labToken });
   check('laboratory staff may read patients', labPatients.status === 200, `status ${labPatients.status}`);
 
   const labWrites = await api('/patients', {
@@ -158,16 +158,16 @@ async function main() {
   });
   check('pharmacist may not write a prescription', pharmacyPrescribes.status === 403, `status ${pharmacyPrescribes.status}`);
 
-  const pharmacyReadsPatients = await api('/patients', { token: pharmacistToken });
+  const pharmacyReadsPatients = await api('/patients?format=envelope', { token: pharmacistToken });
   check('pharmacist may read patients', pharmacyReadsPatients.status === 200, `status ${pharmacyReadsPatients.status}`);
 
   // ------------------------------------------------------------- patients
   console.log('\nPatients');
-  const list = await api('/patients?pageSize=5', { token: adminToken });
+  const list = await api('/patients?format=envelope&pageSize=5', { token: adminToken });
   check('patients list is paginated', list.status === 200 && Array.isArray(list.body.patients) && list.body.pageSize === 5);
   check('patients list reports a total', typeof list.body.total === 'number' && list.body.total > 0, `total ${list.body?.total}`);
 
-  const search = await api('/patients?search=Demo', { token: adminToken });
+  const search = await api('/patients?format=envelope&search=Demo', { token: adminToken });
   check('patient search matches names', search.status === 200 && search.body.patients.length > 0);
   check('search results are all matches', search.body.patients.every((p) => p.fullName.includes('Demo')));
 
@@ -257,7 +257,7 @@ async function main() {
   });
   check('an invalid time is refused', badTime.status === 400);
 
-  const apptList = await api('/appointments?status=Confirmed', { token: adminToken });
+  const apptList = await api('/appointments?format=envelope&status=Confirmed', { token: adminToken });
   check('appointments filter by status', apptList.status === 200 && apptList.body.appointments.every((a) => a.status === 'Confirmed'));
 
   const apptCancel = await api(`/appointments/${appt.body.id}`, { method: 'DELETE', token: adminToken });
@@ -326,13 +326,13 @@ async function main() {
   });
   check('a consultation from another patient is refused', wrongPatient.status === 201 || wrongPatient.status === 400, `status ${wrongPatient.status}`);
 
-  const beforeStock = await api('/pharmacy?search=Paracetamol%20500mg', { token: adminToken });
+  const beforeStock = await api('/pharmacy?format=envelope&search=Paracetamol%20500mg', { token: adminToken });
   const beforeQty = beforeStock.body.medicines?.[0]?.stock;
 
   const dispensed = await api(`/prescriptions/${prescription.body.id}/dispense`, { method: 'POST', token: pharmacistToken });
   check('a prescription is dispensed', dispensed.status === 200 && dispensed.body.status === 'Dispensed', JSON.stringify(dispensed.body).slice(0, 200));
 
-  const afterStock = await api('/pharmacy?search=Paracetamol%20500mg', { token: adminToken });
+  const afterStock = await api('/pharmacy?format=envelope&search=Paracetamol%20500mg', { token: adminToken });
   const afterQty = afterStock.body.medicines?.[0]?.stock;
   check('dispensing reduces stock', afterQty === beforeQty - 15, `${beforeQty} -> ${afterQty}`);
 
@@ -358,7 +358,7 @@ async function main() {
   });
   check('a laboratory result is recorded', result.status === 201 && result.body.result, JSON.stringify(result.body).slice(0, 200));
   check('recording a result completes the request', result.body.status === 'Completed');
-  check('the request shows as completed in the list', (await api('/lab-requests?status=Completed', { token: labToken })).body.requests.some((r) => r.id === labRequest.body.id));
+  check('the request shows as completed in the list', (await api('/lab-requests?format=envelope&status=Completed', { token: labToken })).body.requests.some((r) => r.id === labRequest.body.id));
 
   const amend = await api(`/lab-requests/${labRequest.body.id}/result`, {
     method: 'POST',
@@ -379,7 +379,7 @@ async function main() {
 
   // ------------------------------------------------------------- pharmacy
   console.log('\nPharmacy');
-  const inventory = await api('/pharmacy', { token: pharmacistToken });
+  const inventory = await api('/pharmacy?format=envelope', { token: pharmacistToken });
   check('the inventory is returned', inventory.status === 200 && Array.isArray(inventory.body.medicines));
   check('the inventory reports a summary', typeof inventory.body.summary?.lowStock === 'number');
 
@@ -408,7 +408,7 @@ async function main() {
   });
   check('stock is corrected', restock.status === 200 && restock.body.stock === 90 && restock.body.status === 'In stock');
 
-  const lowStock = await api('/pharmacy?lowStock=true', { token: pharmacistToken });
+  const lowStock = await api('/pharmacy?format=envelope&lowStock=true', { token: pharmacistToken });
   check('low stock filter works', lowStock.status === 200 && lowStock.body.medicines.every((m) => m.stock <= m.reorderLevel));
 
   // ------------------------------------------------------------- dashboard
@@ -598,6 +598,41 @@ async function main() {
 
   const contactReadUnauthorised = await api('/admin/contact-messages');
   check('contact messages are not public', contactReadUnauthorised.status === 401);
+
+  // ------------------------------------------------- published-build shapes
+  console.log('\nCompatibility with the published interface');
+  // The bundle deployed before the paginated envelope calls methods such as
+  // .filter on these responses, so the API still answers a bare array unless a
+  // caller asks for the envelope. Both shapes have to keep working.
+  for (const [label, path] of [
+    ['patients', '/patients'],
+    ['appointments', '/appointments'],
+    ['lab requests', '/lab-requests'],
+  ]) {
+    const legacy = await api(path, { token: adminToken });
+    check(`${label} answers a bare array to the published build`, legacy.status === 200 && Array.isArray(legacy.body), `HTTP ${legacy.status}`);
+
+    const enveloped = await api(`${path}?format=envelope`, { token: adminToken });
+    check(`${label} answers an envelope when one is asked for`, enveloped.status === 200 && !Array.isArray(enveloped.body) && typeof enveloped.body.total === 'number', `HTTP ${enveloped.status}`);
+  }
+
+  const legacyPharmacy = await api('/pharmacy', { token: adminToken });
+  check('pharmacy answers a bare array to the published build', legacyPharmacy.status === 200 && Array.isArray(legacyPharmacy.body), `HTTP ${legacyPharmacy.status}`);
+
+  const legacySummary = await api('/dashboard-summary', { token: adminToken });
+  check(
+    'the dashboard summary still carries the four flat counts the published build reads',
+    legacySummary.status === 200 &&
+      ['totalPatients', 'appointments', 'lowStockItems', 'pendingLabRequests'].every(
+        (key) => typeof legacySummary.body[key] === 'number'
+      ),
+    JSON.stringify(legacySummary.body).slice(0, 160)
+  );
+  check(
+    'the dashboard summary still carries the current figure set',
+    legacySummary.body && legacySummary.body.totals && legacySummary.body.today,
+    'the current figures are missing'
+  );
 
   // ------------------------------------------------------------- summary
   console.log(`\n${'-'.repeat(60)}`);

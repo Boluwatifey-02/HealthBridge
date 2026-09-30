@@ -100,6 +100,16 @@ function query(params) {
   return string ? `?${string}` : '';
 }
 
+/**
+ * Paginated list endpoints answer with a bare array unless the caller asks for
+ * the envelope, which is what carries the page size and total. The bare array
+ * exists only so the interface published before this was deployed keeps
+ * working; nothing new should rely on it.
+ */
+function listQuery(params) {
+  return query({ format: 'envelope', ...(params || {}) });
+}
+
 export const UNAUTHORIZED_EVENT_NAME = UNAUTHORIZED_EVENT;
 export { STAFF_TOKEN_KEY, PATIENT_TOKEN_KEY };
 
@@ -147,7 +157,7 @@ export const api = {
   getMyRecord: () => request('/patient-auth/me', { audience: 'patient' }),
 
   // ------------------------------------------------------------ patients
-  getPatients: (params) => request(`/patients${query(params)}`),
+  getPatients: (params) => request(`/patients${listQuery(params)}`),
   getPatient: (id) => request(`/patients/${encodeURIComponent(id)}`),
   getPatientTimeline: (id) => request(`/patients/${encodeURIComponent(id)}/timeline`),
   createPatient: (payload) => post('/patients', payload),
@@ -156,7 +166,7 @@ export const api = {
   deactivatePatient: (id) => request(`/patients/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   // -------------------------------------------------------- appointments
-  getAppointments: (params) => request(`/appointments${query(params)}`),
+  getAppointments: (params) => request(`/appointments${listQuery(params)}`),
   createAppointment: (payload) => post('/appointments', payload),
   updateAppointment: (id, payload) =>
     request(`/appointments/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
@@ -164,25 +174,25 @@ export const api = {
   getDoctors: () => request('/staff/doctors'),
 
   // ------------------------------------------------------- consultations
-  getConsultations: (params) => request(`/consultations${query(params)}`),
+  getConsultations: (params) => request(`/consultations${listQuery(params)}`),
   createConsultation: (payload) => post('/consultations', payload),
   updateConsultation: (id, payload) =>
     request(`/consultations/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   // -------------------------------------------------------- prescriptions
-  getPrescriptions: (params) => request(`/prescriptions${query(params)}`),
+  getPrescriptions: (params) => request(`/prescriptions${listQuery(params)}`),
   createPrescription: (payload) => post('/prescriptions', payload),
   dispensePrescription: (id) => post(`/prescriptions/${encodeURIComponent(id)}/dispense`, {}),
   cancelPrescription: (id) => post(`/prescriptions/${encodeURIComponent(id)}/cancel`, {}),
 
   // ------------------------------------------------------------- pharmacy
-  getPharmacy: (params) => request(`/pharmacy${query(params)}`),
+  getPharmacy: (params) => request(`/pharmacy${listQuery(params)}`),
   createMedicine: (payload) => post('/pharmacy', payload),
   updateMedicine: (id, payload) =>
     request(`/pharmacy/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   // ----------------------------------------------------------- laboratory
-  getLabRequests: (params) => request(`/lab-requests${query(params)}`),
+  getLabRequests: (params) => request(`/lab-requests${listQuery(params)}`),
   createLabRequest: (payload) => post('/lab-requests', payload),
   submitLabResult: (id, payload) => post(`/lab-requests/${encodeURIComponent(id)}/result`, payload),
   cancelLabRequest: (id) => post(`/lab-requests/${encodeURIComponent(id)}/cancel`, {}),

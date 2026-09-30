@@ -6,6 +6,7 @@ const { authorize } = require('../middleware/rbac');
 const { ApiError, asyncHandler, DATABASE_UNAVAILABLE_MESSAGE } = require('../lib/http');
 const { recordAudit } = require('../lib/audit');
 const { idGenerators } = require('../lib/ids');
+const { sendList } = require('../lib/listResponse');
 const v = require('../lib/validation');
 
 const router = express.Router();
@@ -106,7 +107,7 @@ router.get(
       params
     );
 
-    return res.json({
+return sendList(req, res, 'requests', {
       requests: rows.map(mapLabRequest),
       total: Number(countRows[0]?.total || 0),
       page,

@@ -6,6 +6,7 @@ const { authorize } = require('../middleware/rbac');
 const { ApiError, asyncHandler, DATABASE_UNAVAILABLE_MESSAGE } = require('../lib/http');
 const { recordAudit } = require('../lib/audit');
 const { idGenerators } = require('../lib/ids');
+const { sendList } = require('../lib/listResponse');
 const v = require('../lib/validation');
 
 const router = express.Router();
@@ -86,7 +87,7 @@ router.get(
 
     const all = rows.map(mapMedicine);
 
-    return res.json({
+return sendList(req, res, 'medicines', {
       medicines: all,
       total: all.length,
       summary: {
