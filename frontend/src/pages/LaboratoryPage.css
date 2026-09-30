@@ -317,9 +317,11 @@
 }
 
 @media (max-width: 760px) {
-  .laboratory-header {
-    padding: 0 18px;
-  }
+    .laboratory-header {
+      padding: 12px 18px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
 
   .laboratory-main {
     padding: 32px 16px 48px;

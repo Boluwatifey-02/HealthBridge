@@ -21,6 +21,9 @@
 .dashboard-header-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
   gap: 14px;
   color: var(--charcoal-soft);
   font-size: 0.78rem;
@@ -346,8 +349,17 @@
 
 @media (max-width: 650px) {
   .dashboard-header {
-    height: 64px;
-    padding: 0 20px;
+    height: auto;
+    min-height: 64px;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dashboard-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
   }
 
   .dashboard-header-right > span {

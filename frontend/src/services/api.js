@@ -60,7 +60,22 @@ async function request(endpoint, options = {}) {
     throw new Error(error.message || 'Request failed.');
   }
 
-  return response.json();
+  // A 200 can still arrive with an empty or non-JSON body (proxy truncation,
+  // a misconfigured route). Surface that plainly instead of leaking a
+  // SyntaxError such as "Unexpected end of JSON input" to the user.
+  const rawBody = await response.text();
+
+  if (!rawBody.trim()) {
+    throw new Error(
+      'The server returned an empty response. Please try again in a moment.'
+    );
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    throw new Error('The server returned an unreadable response.');
+  }
 }
 
 export const UNAUTHORIZED_EVENT_NAME = UNAUTHORIZED_EVENT;

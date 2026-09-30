@@ -161,7 +161,9 @@
 
 @media (max-width: 760px) {
   .ai-insights-header {
-    padding: 0 5%;
+    padding: 12px 5%;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .ai-insights-main {

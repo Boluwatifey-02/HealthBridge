@@ -38,7 +38,12 @@ function AIInsightsPage({ onBack, onLogout }) {
         if (!isMounted) return;
 
         if (!Array.isArray(data)) {
-          setInsights([]);
+          // A 200 that is not an insight array is a real problem, not "no data".
+          // Say so rather than implying the records are simply empty.
+          if (isMounted) {
+            setInsights([]);
+            setError('The insights service returned an unexpected response. Please try again shortly.');
+          }
           return;
         }
 
