@@ -82,16 +82,21 @@ async function main() {
     }
   );
   const deploy = await created.json();
-  if (created.status >= 300 || !deploy.uid) {
+  if (created.status >= 300) {
     throw new Error(`Vercel rejected the deployment (HTTP ${created.status}): ${JSON.stringify(deploy).slice(0, 300)}`);
   }
-  console.log(`     deployment ${deploy.uid}`);
+  const uid = deploy.uid || deploy.id;
+  if (!uid) {
+    throw new Error(`Vercel returned no deployment id (HTTP ${created.status}); keys were: ${Object.keys(deploy).join(', ')}`);
+  }
+  const deploymentUrl = deploy.url || `${uid}.vercel.app`;
+  console.log(`     deployment ${uid}`);
 
   console.log('3/4  waiting for build');
   let ready = false;
   for (let attempt = 0; attempt < 90; attempt += 1) {
     await sleep(5000);
-    const res = await fetch(`https://api.vercel.com/v13/deployments/${deploy.uid}`, { headers });
+    const res = await fetch(`https://api.vercel.com/v13/deployments/${uid}`, { headers });
     const info = await res.json();
     const state = info.state || info.readyState;
     if (state === 'READY') { ready = true; break; }
@@ -102,13 +107,13 @@ async function main() {
   if (!ready) throw new Error('Build did not finish in time. Alias left unchanged.');
 
   console.log('4/4  verifying the built bundle');
-  const html = await (await fetch(`https://${deploy.url}`)).text();
+  const html = await (await fetch(`https://${deploymentUrl}`)).text();
   const jsRef = [...html.matchAll(/\/assets\/[A-Za-z0-9._-]+\.js/g)][0];
   const cssRef = [...html.matchAll(/\/assets\/[A-Za-z0-9._-]+\.css/g)][0];
   if (!jsRef) throw new Error('Built page references no JavaScript bundle. Alias left unchanged.');
 
-  const js = await (await fetch(`https://${deploy.url}${jsRef[0]}`)).text();
-  const css = cssRef ? await (await fetch(`https://${deploy.url}${cssRef[0]}`)).text() : '';
+  const js = await (await fetch(`https://${deploymentUrl}${jsRef[0]}`)).text();
+  const css = cssRef ? await (await fetch(`https://${deploymentUrl}${cssRef[0]}`)).text() : '';
 
   const checks = [
     ['bundle targets the live backend', js.includes(EXPECTED_API)],
@@ -124,7 +129,7 @@ async function main() {
 
   for (const alias of ALIASES) {
     const res = await fetch(
-      `https://api.vercel.com/v4/deployments/${deploy.uid}/aliases?projectId=${PROJECT}`,
+      `https://api.vercel.com/v4/deployments/${uid}/aliases?projectId=${PROJECT}`,
       { method: 'POST', headers, body: JSON.stringify({ alias, redirect: null }) }
     );
     console.log(`     alias ${alias} -> HTTP ${res.status}`);
