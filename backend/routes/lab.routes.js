@@ -56,7 +56,16 @@ async function ensureLabSeedData() {
 
   const [patients] = await query('SELECT id FROM patients ORDER BY created_at DESC LIMIT 10');
   const [doctorRows] = await query('SELECT id FROM staff WHERE email = ? LIMIT 1', ['admin@healthbridge.org']);
-  const patientId = patients[0]?.id || 'HB-19709253';
+
+  // lab_requests.patient_id is a foreign key to patients(id). Seeding against a
+  // placeholder id would violate the constraint and turn the whole listing into a
+  // 500, so only seed once a real patient record exists.
+  const patientId = patients[0]?.id;
+
+  if (!patientId) {
+    return;
+  }
+
   const doctorId = doctorRows[0]?.id || 'STAFF-001';
 
   const seedRequests = [
