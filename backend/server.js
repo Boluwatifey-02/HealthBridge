@@ -100,12 +100,49 @@ app.use('/api/patient-auth/set-password', resetLimiter);
 app.use('/api/patient-auth/forgot-password', resetLimiter);
 app.use('/api/patient-auth/reset-password', resetLimiter);
 
-app.get('/api/health', (req, res) => {
-  const healthy = !isFallbackMode();
+/**
+ * Reports whether the service can actually serve a request.
+ *
+ * This used to report healthy whenever the database had connected at least
+ * once at start-up, so it stayed green while every query was failing and the
+ * host had no way to tell. It now runs a real statement, and remembers the
+ * result briefly so a health check every few seconds does not open a new
+ * connection each time.
+ */
+const HEALTH_PROBE_INTERVAL_MS = 5000;
+let lastProbe = { at: 0, ok: false, reason: '' };
+
+async function probeDatabase() {
+  const now = Date.now();
+
+  if (now - lastProbe.at < HEALTH_PROBE_INTERVAL_MS) {
+    return lastProbe;
+  }
+
+  let result;
+
+  try {
+    await query('SELECT 1');
+    result = { ok: true, reason: '' };
+  } catch (error) {
+    // The code is safe to report and is what identifies the cause; the message
+    // can contain the host name and is not sent to callers.
+    result = { ok: false, reason: error.code || 'query-failed' };
+  }
+
+  lastProbe = { at: now, ...result };
+  return lastProbe;
+}
+
+app.get('/api/health', async (req, res) => {
+  const probe = await probeDatabase();
+  const healthy = probe.ok && !isFallbackMode();
+
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ok' : 'degraded',
     service: 'HealthBridge backend',
     database: healthy ? 'mysql' : 'unavailable',
+    ...(probe.ok ? {} : { databaseError: probe.reason }),
     timestamp: new Date().toISOString(),
   });
 });
