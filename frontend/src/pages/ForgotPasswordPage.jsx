@@ -4,7 +4,15 @@ import Brand from '../components/Brand';
 import api from '../services/api';
 import './LoginPage.css';
 
-function ForgotPasswordPage({ onBackToLogin }) {
+/**
+ * Shared by staff and patient accounts. `audience` chooses which endpoint the
+ * address is checked against, so a patient cannot trigger a staff reset or the
+ * reverse. The reply is identical for a known and an unknown address, so this
+ * page cannot be used to find out who has an account.
+ */
+function ForgotPasswordPage({ onBackToLogin, audience = 'staff' }) {
+  const isPatient = audience === 'patient';
+
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [note, setNote] = useState('');
@@ -28,7 +36,10 @@ function ForgotPasswordPage({ onBackToLogin }) {
     setResetUrl('');
 
     try {
-      const response = await api.forgotPassword(trimmedEmail);
+      const response = isPatient
+        ? await api.patientForgotPassword(trimmedEmail)
+        : await api.forgotPassword(trimmedEmail);
+
       setMessage(response.message);
       setNote(response.deliveryNote || '');
       setResetUrl(response.resetUrl || '');
@@ -53,7 +64,7 @@ function ForgotPasswordPage({ onBackToLogin }) {
           <h1>Reset your password.</h1>
 
           <p>
-            Enter the email address registered to your HealthBridge account.
+            Enter the email address {isPatient ? 'the clinic holds on your record' : 'registered to your HealthBridge account'}.
             If this deployment is configured to send email, you will receive a
             secure link to choose a new password.
           </p>

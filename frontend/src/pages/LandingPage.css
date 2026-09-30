@@ -1407,6 +1407,49 @@ Cm/* ================================
   background: var(--burgundy-deep);
 }
 
+/* A refusal and a confirmation both have to be visible, otherwise the form
+   looks like it did nothing after a submission. */
+.contact-form-error,
+.contact-form-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0;
+  padding: 12px 15px;
+  border-radius: 11px;
+  font-size: 0.87rem;
+  line-height: 1.55;
+}
+
+.contact-form-error {
+  border: 1px solid var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.contact-form-success {
+  border: 1px solid var(--emerald);
+  background: var(--emerald-soft);
+  color: var(--emerald);
+}
+
+.contact-form-error svg,
+.contact-form-success svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.contact-details-missing {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-grey);
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 @media (max-width: 850px) {
   .contact-container {
     grid-template-columns: 1fr;
@@ -1608,10 +1651,20 @@ Cm/* ================================
   padding: 30px 25px;
   background: var(--white);
   border: 1px solid #e2ddd6;
+  /* The card is a real link, so it needs the link reset to look like the
+     original article and still be reachable by keyboard. */
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease,
     border-color 0.25s ease;
+}
+
+.service-card:focus-visible {
+  outline: 3px solid var(--burgundy);
+  outline-offset: 3px;
 }
 
 .service-card:hover {
@@ -1644,6 +1697,25 @@ Cm/* ================================
   color: var(--charcoal-soft);
   font-size: 0.87rem;
   line-height: 1.75;
+}
+
+.service-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--burgundy);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.service-card:hover .service-card-link svg {
+  transform: translate(2px, -2px);
+}
+
+.service-card-link svg {
+  transition: transform 0.2s ease;
 }
 
 @media (max-width: 950px) {

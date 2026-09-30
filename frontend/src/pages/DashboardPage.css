@@ -278,6 +278,48 @@
   padding-top: 0;
 }
 
+/* A failed load is shown rather than hidden behind a set of zeros, which would
+   read as a genuine result. */
+.dashboard-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 15px 18px;
+  border: 1px solid var(--red);
+  border-radius: 14px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 0.92rem;
+}
+
+.dashboard-error span {
+  flex: 1;
+}
+
+.dashboard-error button {
+  padding: 7px 14px;
+  border: 1px solid var(--red);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--red);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-error button:hover {
+  background: var(--red);
+  color: var(--white);
+}
+
+.dashboard-note {
+  margin-top: 18px;
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 .dashboard-quick-actions {
   padding: 28px;
   background: var(--burgundy-deep);

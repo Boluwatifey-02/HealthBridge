@@ -3,32 +3,45 @@ import {
   ClipboardList,
   Pill,
   FlaskConical,
+  ArrowUpRight,
 } from 'lucide-react';
 
+/**
+ * Each service links to the part of the application it describes.
+ *
+ * The cards previously navigated with `window.location.href`, which reloads the
+ * whole application and discards the current page state, and only two of the
+ * four cards were wired up at all. The link is now declared with the card, so a
+ * card that has no page behind it does not look clickable.
+ */
 const services = [
   {
     icon: Stethoscope,
     title: 'Clinical Care',
+    path: '/patients',
     description:
-      'Support healthcare professionals with connected patient information and streamlined clinical workflows.',
+      'Record consultations, diagnoses and treatment plans against a patient, with the history kept in one place.',
   },
   {
     icon: ClipboardList,
     title: 'Patient Management',
+    path: '/patients',
     description:
-      'Register patients, manage digital records, and make important patient information easier to access.',
+      'Register patients, search their records, and keep contact and demographic details current.',
   },
   {
     icon: Pill,
     title: 'Pharmacy Services',
+    path: '/pharmacy',
     description:
-      'Connect prescriptions with pharmacy workflows and help healthcare centres keep track of medication inventory.',
+      'Issue and dispense prescriptions, with stock reduced on dispensing and dispensing blocked twice over.',
   },
   {
     icon: FlaskConical,
     title: 'Laboratory Services',
+    path: '/laboratory',
     description:
-      'Support laboratory requests and results within the same connected healthcare environment.',
+      'Raise laboratory requests, record results against them, and keep the request and its result together.',
   },
 ];
 
@@ -54,45 +67,21 @@ function ServicesSection() {
           {services.map((service) => {
             const Icon = service.icon;
 
-              return (
-    <article
-      key={service.title}
-      className="service-card"
-      onClick={() => {
-
-  if (service.title === 'Patient Management') {
-    window.location.href = '/patients';
-  }
-
-  if (service.title === 'Pharmacy Services') {
-    window.location.href = '/pharmacy';
-  }
-
-  if (service.title === 'Clinical Care') {
-  window.location.href = '/patients';
-}
-
-if (service.title === 'Laboratory Services') {
-  window.location.href = '/laboratory';
-}
-
-}}
-style={{
-  cursor:
-    service.title === 'Patient Management' ||
-    service.title === 'Pharmacy Services'
-      ? 'pointer'
-      : 'default',
-}}
-    >
-      <div className="service-icon">
-        <service.icon size={22} />
-      </div>
+            return (
+              <a key={service.title} className="service-card" href={service.path}>
+                <div className="service-icon">
+                  <Icon size={22} />
+                </div>
 
                 <h3>{service.title}</h3>
 
                 <p>{service.description}</p>
-              </article>
+
+                <span className="service-card-link">
+                  Open
+                  <ArrowUpRight size={16} />
+                </span>
+              </a>
             );
           })}
         </div>

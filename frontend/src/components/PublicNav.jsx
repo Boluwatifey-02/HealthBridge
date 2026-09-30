@@ -2,7 +2,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import Brand from './Brand';
 
-function PublicNav({ page = 'Home', setPage, onLogin }) {
+function PublicNav({ page = 'Home', setPage, onLogin, onPatientLogin }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
@@ -61,12 +61,22 @@ function PublicNav({ page = 'Home', setPage, onLogin }) {
         </nav>
 
         <div className="public-nav-login">
+          {onPatientLogin && (
+            <button
+              type="button"
+              className="nav-login-button"
+              onClick={onPatientLogin}
+            >
+              Patient portal
+            </button>
+          )}
+
           <button
             type="button"
             className="nav-login-button"
             onClick={onLogin}
           >
-            Login
+            Staff login
             <ArrowRight size={15} />
           </button>
         </div>
@@ -95,12 +105,22 @@ function PublicNav({ page = 'Home', setPage, onLogin }) {
             </button>
           ))}
 
+          {onPatientLogin && (
+            <button
+              type="button"
+              className="mobile-login-button"
+              onClick={onPatientLogin}
+            >
+              Patient portal
+            </button>
+          )}
+
           <button
             type="button"
             className="mobile-login-button"
             onClick={onLogin}
           >
-            Login
+            Staff login
           </button>
         </div>
       )}

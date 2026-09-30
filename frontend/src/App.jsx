@@ -12,6 +12,8 @@ import PharmacyPage from './pages/PharmacyPage';
 import LaboratoryPage from './pages/LaboratoryPage';
 import AIInsightsPage from './pages/AIInsightsPage';
 import SecurityPage from './pages/SecurityPage';
+import PatientLoginPage from './pages/PatientLoginPage';
+import PatientPortalPage from './pages/PatientPortalPage';
 import api, { UNAUTHORIZED_EVENT_NAME } from './services/api';
 
 const ROUTES = {
@@ -28,6 +30,10 @@ const ROUTES = {
   '/laboratory': 'laboratory',
   '/ai-insights': 'ai-insights',
   '/security': 'security',
+  '/patient-portal': 'patient-login',
+  '/patient-reset-password': 'patient-reset-password',
+  '/patient-forgot-password': 'patient-forgot-password',
+  '/my-record': 'patient-portal',
 };
 
 const PAGE_PATHS = Object.entries(ROUTES).reduce((accumulator, [path, page]) => {
@@ -35,15 +41,37 @@ const PAGE_PATHS = Object.entries(ROUTES).reduce((accumulator, [path, page]) => 
   return accumulator;
 }, {});
 
+// Staff workspace pages. A patient session is never sent to any of these, so a
+// patient cannot end up in the clinical workspace by following a link.
+const STAFF_ONLY_PAGES = new Set([
+  'dashboard',
+  'patients',
+  'appointments',
+  'patient-registration',
+  'clinical-care',
+  'pharmacy',
+  'laboratory',
+  'ai-insights',
+  'security',
+]);
+
 function resolvePage() {
   const path = window.location.pathname;
   const matched = ROUTES[path];
 
   if (matched) {
+    // A patient who already has a session and reloads the portal link should see
+    // their record, not a second sign-in form they have no reason to fill in.
+    if (matched === 'patient-login' && api.getPatientToken()) {
+      return 'patient-portal';
+    }
+
     return matched;
   }
 
-  return api.getToken() ? 'dashboard' : 'home';
+  if (api.getToken()) return 'dashboard';
+  if (api.getPatientToken()) return 'patient-portal';
+  return 'home';
 }
 
 // The reset link carries its single-use token in the query string.
@@ -55,9 +83,33 @@ function App() {
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [authError, setAuthError] = useState('');
+  const [patientAuthError, setPatientAuthError] = useState('');
   const [patientError, setPatientError] = useState('');
   const [patientLoading, setPatientLoading] = useState(false);
   const [page, setPage] = useState(resolvePage);
+
+  // The signed-in member of staff. The dashboard greets them by name and states
+  // the role in use, which it can only do once this is loaded from the server
+  // rather than guessed from the page being open.
+  const [staffUser, setStaffUser] = useState(null);
+
+  const loadStaffUser = useCallback(async () => {
+    if (!api.getToken()) {
+      setStaffUser(null);
+      return;
+    }
+
+    try {
+      const response = await api.me();
+      setStaffUser(response.user || null);
+    } catch {
+      setStaffUser(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStaffUser();
+  }, [loadStaffUser, page]);
 
   const navigate = useCallback((nextPage) => {
     const path = PAGE_PATHS[nextPage] || '/';
@@ -65,7 +117,15 @@ function App() {
     setPage(nextPage);
   }, []);
 
-  const handleUnauthorized = useCallback(() => {
+  const handleUnauthorized = useCallback((event) => {
+    // The event carries which session ended, so an expired patient session does
+    // not sign a member of staff out and vice versa.
+    if (event?.detail?.audience === 'patient') {
+      setPatientAuthError('Your portal session has ended. Please sign in again.');
+      setPage('patient-login');
+      return;
+    }
+
     setAuthError('Your session has ended. Please sign in again.');
     setPage('login');
   }, []);
@@ -96,7 +156,7 @@ function App() {
 
     try {
       const data = await api.getPatients();
-      setPatients(Array.isArray(data) ? data : []);
+      setPatients(data?.patients || []);
     } catch (error) {
       console.error('Unable to fetch patients from backend:', error);
       setPatientError(error.message || 'Unable to load patient records.');
@@ -105,6 +165,36 @@ function App() {
       setPatientLoading(false);
     }
   }, []);
+
+  const handlePatientLogin = async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get('email') || '').trim();
+    const password = String(formData.get('password') || '').trim();
+
+    if (!email || !password) {
+      setPatientAuthError('Please enter your email and password.');
+      return;
+    }
+
+    try {
+      const response = await api.patientLogin({ email, password });
+      api.setPatientToken(response.token);
+      setStaffUser(null);
+      setPatientAuthError('');
+      navigate('patient-portal');
+    } catch (error) {
+      setPatientAuthError(error.message || 'Incorrect email or password.');
+      api.clearPatientToken();
+    }
+  };
+
+  const handlePatientLogout = useCallback(() => {
+    api.clearPatientToken();
+    setPatientAuthError('');
+    navigate('patient-login');
+  }, [navigate]);
 
   useEffect(() => {
     if (page === 'patients' || page === 'patient-registration') {
@@ -128,9 +218,11 @@ function App() {
       const response = await api.login({ email, password });
       api.setToken(response.token);
       setAuthError('');
+      setStaffUser(response.user || null);
       navigate('dashboard');
     } catch (error) {
       setAuthError(error.message || 'Invalid email or password.');
+      setStaffUser(null);
       api.clearToken();
     }
   };
@@ -139,6 +231,7 @@ function App() {
     api.clearToken();
     setPatients([]);
     setSelectedPatient(null);
+    setStaffUser(null);
     setAuthError('');
     navigate('login');
   }, [navigate]);
@@ -184,20 +277,65 @@ function App() {
     navigate('forgot-password');
   }, [navigate]);
 
-  const openResetPassword = useCallback(() => {
-    setAuthError('');
-    navigate('reset-password');
-  }, [navigate]);
-
   const finishPasswordReset = useCallback(() => {
     setAuthError('');
     navigate('login');
   }, [navigate]);
 
   const isAuthenticated = Boolean(api.getToken());
+  const isPatientAuthenticated = Boolean(api.getPatientToken());
 
   if (page === 'home') {
-    return <LandingPage onLoginClick={openLogin} />;
+    return (
+      <LandingPage
+        onLoginClick={openLogin}
+        onPatientLoginClick={() => navigate('patient-login')}
+      />
+    );
+  }
+
+  if (page === 'patient-login') {
+    return (
+      <PatientLoginPage
+        onLogin={handlePatientLogin}
+        onForgotPassword={() => navigate('patient-forgot-password')}
+        error={patientAuthError}
+      />
+    );
+  }
+
+  if (page === 'patient-forgot-password') {
+    return (
+      <ForgotPasswordPage
+        audience="patient"
+        onBackToLogin={() => navigate('patient-login')}
+      />
+    );
+  }
+
+  if (page === 'patient-reset-password') {
+    return (
+      <ResetPasswordPage
+        audience="patient"
+        token={readResetToken()}
+        onBackToLogin={() => navigate('patient-login')}
+        onResetComplete={() => navigate('patient-login')}
+      />
+    );
+  }
+
+  if (page === 'patient-portal') {
+    if (!isPatientAuthenticated) {
+      return (
+        <PatientLoginPage
+          onLogin={handlePatientLogin}
+          onForgotPassword={() => navigate('patient-forgot-password')}
+          error={patientAuthError}
+        />
+      );
+    }
+
+    return <PatientPortalPage onLogout={handlePatientLogout} />;
   }
 
   if (page === 'login') {
@@ -213,19 +351,22 @@ function App() {
     return (
       <ResetPasswordPage
         token={readResetToken()}
-        onBackToLogin={openResetPassword}
+        onBackToLogin={openLogin}
         onResetComplete={finishPasswordReset}
       />
     );
   }
 
-  if (!isAuthenticated) {
+  // A patient session must not open the staff workspace, and a missing staff
+  // session must not leave a blank screen.
+  if (STAFF_ONLY_PAGES.has(page) && !isAuthenticated) {
     return <LoginPage onLogin={handleLogin} onForgotPassword={openForgotPassword} error={authError} />;
   }
 
   if (page === 'dashboard') {
     return (
       <DashboardPage
+        user={staffUser}
         onPatientsClick={openPatients}
         onAppointmentsClick={openAppointments}
         onLaboratoryClick={openLaboratory}
@@ -289,7 +430,12 @@ function App() {
     return <SecurityPage onBack={openDashboard} onLogout={handleLogout} />;
   }
 
-  return <LandingPage onLoginClick={openLogin} />;
+  return (
+    <LandingPage
+      onLoginClick={openLogin}
+      onPatientLoginClick={() => navigate('patient-login')}
+    />
+  );
 }
 
 export default App;

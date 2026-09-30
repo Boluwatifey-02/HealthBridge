@@ -7,10 +7,10 @@ import {
   ArrowLeft,
   CalendarDays,
   Phone,
-  MapPin,
   FileText,
   Activity,
   Stethoscope,
+  Pill,
   LogOut,
 } from 'lucide-react';
 import Brand from '../components/Brand';
@@ -43,47 +43,49 @@ function PatientsPage({
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [timeline, setTimeline] = useState(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   useEffect(() => {
     if (!selectedPatient?.id) {
-      setHistory([]);
+      setTimeline(null);
+      setHistoryError(null);
       return;
     }
 
     let isMounted = true;
 
-    const loadHistory = async () => {
+    // One call for everything known about this patient. The previous version
+    // fetched every consultation in the clinic and filtered in the browser,
+    // which returned an empty history whenever the list was paginated.
+    const loadTimeline = async () => {
       setIsHistoryLoading(true);
+      setHistoryError(null);
 
       try {
-        const consultations = await api.getConsultations();
-        const matching = (Array.isArray(consultations) ? consultations : []).filter(
-          (consultation) => consultation.patientId === selectedPatient.id,
-        );
+        const result = await api.getPatientTimeline(selectedPatient.id);
 
-        if (isMounted) {
-          setHistory(matching);
-        }
+        if (isMounted) setTimeline(result);
       } catch (loadError) {
-        console.error('Unable to load patient clinical history:', loadError);
         if (isMounted) {
-          setHistory([]);
+          setTimeline(null);
+          setHistoryError(loadError.message || 'The patient record could not be loaded.');
         }
       } finally {
-        if (isMounted) {
-          setIsHistoryLoading(false);
-        }
+        if (isMounted) setIsHistoryLoading(false);
       }
     };
 
-    loadHistory();
+    loadTimeline();
 
     return () => {
       isMounted = false;
     };
   }, [selectedPatient?.id]);
+
+  const history = timeline?.consultations || [];
+  const counts = timeline?.counts || {};
 
   const filteredPatients = (patients || []).filter((patient) => {
     const search = searchTerm.toLowerCase();
@@ -208,7 +210,61 @@ function PatientsPage({
                 <strong>{selectedPatient.id}</strong>
               </div>
             </article>
+
+            <article className="patient-information-card">
+              <div className="patient-card-heading">
+                <FileText size={18} />
+                <h2>Recorded activity</h2>
+              </div>
+
+              {isHistoryLoading && (
+                <div className="patient-detail">
+                  <span>Loading</span>
+                  <strong>Counting records…</strong>
+                </div>
+              )}
+
+              {!isHistoryLoading && counts.appointments !== undefined && (
+                <>
+                  <div className="patient-detail">
+                    <span>Consultations</span>
+                    <strong>
+                      {counts.consultations} ({counts.completedConsultations} with a
+                      diagnosis)
+                    </strong>
+                  </div>
+
+                  <div className="patient-detail">
+                    <span>Appointments</span>
+                    <strong>{counts.appointments}</strong>
+                  </div>
+
+                  <div className="patient-detail">
+                    <span>Prescriptions</span>
+                    <strong>{counts.prescriptions}</strong>
+                  </div>
+
+                  <div className="patient-detail">
+                    <span>Laboratory requests</span>
+                    <strong>{counts.labRequests}</strong>
+                  </div>
+                </>
+              )}
+            </article>
           </section>
+
+          {historyError && (
+            <section className="patient-history-card">
+              <div className="medical-history-row">
+                <div className="history-date">—</div>
+                <div>
+                  <strong>Could not load this record</strong>
+                  <span>{historyError}</span>
+                </div>
+                <span className="history-status">Pending</span>
+              </div>
+            </section>
+          )}
 
           <section className="patient-history-card">
             <div className="patient-card-heading">
@@ -269,6 +325,68 @@ function PatientsPage({
               </div>
             )}
           </section>
+
+          {(timeline?.prescriptions?.length > 0 || timeline?.labRequests?.length > 0) && (
+            <section className="patient-history-card">
+              <div className="patient-card-heading">
+                <Pill size={18} />
+                <div>
+                  <h2>Prescriptions and laboratory work</h2>
+                  <p>Everything ordered for this patient, with its current state.</p>
+                </div>
+              </div>
+
+              {(timeline.prescriptions || []).map((prescription) => (
+                <div className="medical-history-row" key={`rx-${prescription.id}`}>
+                  <div className="history-date">
+                    {prescription.createdAt
+                      ? new Date(prescription.createdAt).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : '—'}
+                  </div>
+
+                  <div>
+                    <strong>{prescription.medicineName}</strong>
+                    <span>
+                      {prescription.dosage} · {prescription.frequency} ·{' '}
+                      {prescription.duration} · {prescription.quantity} units
+                      {prescription.instructions ? ` — ${prescription.instructions}` : ''}
+                    </span>
+                  </div>
+
+                  <span className="history-status">{prescription.status}</span>
+                </div>
+              ))}
+
+              {(timeline.labRequests || []).map((request) => (
+                <div className="medical-history-row" key={`lab-${request.id}`}>
+                  <div className="history-date">
+                    {request.requestDate
+                      ? new Date(request.requestDate).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : '—'}
+                  </div>
+
+                  <div>
+                    <strong>{request.testName}</strong>
+                    <span>
+                      {request.resultText
+                        ? request.resultText
+                        : request.notes || 'No result recorded yet.'}
+                    </span>
+                  </div>
+
+                  <span className="history-status">{request.status}</span>
+                </div>
+              ))}
+            </section>
+          )}
         </div>
       </main>
     );

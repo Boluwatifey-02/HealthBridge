@@ -159,6 +159,27 @@
   line-height: 1.6;
 }
 
+/* The method and timestamp are shown so a reader can tell how fresh the counts
+   are and how they were produced, instead of taking them on trust. */
+.ai-insights-disclaimer {
+  margin-top: 20px;
+  padding: 15px 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--burgundy);
+  border-radius: 12px;
+  background: var(--soft-grey);
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.ai-insights-timestamp {
+  display: block;
+  margin-top: 10px;
+  color: var(--charcoal-soft);
+  font-size: 0.82rem;
+}
+
 @media (max-width: 760px) {
   .ai-insights-header {
     padding: 12px 5%;

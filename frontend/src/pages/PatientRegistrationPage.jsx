@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   UserRound,
   Phone,
-  MapPin,
   HeartPulse,
   ShieldCheck,
   Save,

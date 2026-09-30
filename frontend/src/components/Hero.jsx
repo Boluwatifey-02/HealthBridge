@@ -1,4 +1,20 @@
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Play, Check } from 'lucide-react';
+
+/**
+ * The public landing page cannot show live clinic figures: every number would
+ * have to come from a signed-in session, and inventing one for a marketing page
+ * would be fabricating patient activity. This panel therefore describes what
+ * the system actually does, and every item below is a feature that is really
+ * implemented in the backend.
+ */
+const CAPABILITIES = [
+  'One record per patient, with their full history in one place',
+  'Appointments, consultations, prescriptions and results linked to that record',
+  'Pharmacy stock that updates when a prescription is dispensed',
+  'Role-based access for reception, clinical, pharmacy, laboratory and admin staff',
+  'A patient portal so a patient can see their own record and results',
+  'An audit trail recording who viewed or changed a record',
+];
 
 function Hero({ onGetStarted }) {
   return (
@@ -16,9 +32,11 @@ function Hero({ onGetStarted }) {
           </h1>
 
           <p className="hero-description">
-            HealthBridge is an AI-powered electronic health record and health
-            management system designed to help Nigerian primary healthcare
-            centres deliver more connected, efficient, and patient-centred care.
+            HealthBridge is an electronic health record and health management
+            system built for Nigerian primary healthcare centres. It keeps
+            patient records, appointments, clinical notes, prescriptions,
+            laboratory results and pharmacy stock connected to the same patient,
+            so the information a clinician needs is already in front of them.
           </p>
 
           <div className="hero-actions">
@@ -27,30 +45,30 @@ function Hero({ onGetStarted }) {
               className="hero-primary-button"
               onClick={onGetStarted}
             >
-              Get Started
+              Sign in
               <ArrowRight size={17} />
             </button>
 
             <button
-  type="button"
-  className="hero-secondary-button"
-  onClick={() => {
-    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-  }}
->
+              type="button"
+              className="hero-secondary-button"
+              onClick={() => {
+                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               <span className="hero-play-icon">
                 <Play size={13} fill="currentColor" />
               </span>
-              Explore HealthBridge
+              See what it does
             </button>
           </div>
 
           <div className="hero-trust">
             <span>Built for Nigerian primary healthcare</span>
             <span className="hero-trust-dot"></span>
-            <span>AI-enabled</span>
+            <span>Role-based access</span>
             <span className="hero-trust-dot"></span>
-            <span>Secure</span>
+            <span>Audit logged</span>
           </div>
         </div>
 
@@ -58,109 +76,29 @@ function Hero({ onGetStarted }) {
           <div className="hero-dashboard-card">
             <div className="hero-dashboard-top">
               <div>
-                <span className="hero-dashboard-label">
-                  HEALTHBRIDGE OVERVIEW
-                </span>
-                <h3>Healthcare at a glance</h3>
-              </div>
-
-              <span className="hero-live">
-                <span></span>
-                Live
-              </span>
-            </div>
-
-            <div className="hero-dashboard-stats">
-              <div
-            className="hero-stats-card"
-            role="button"
-            tabIndex={0}
-            onClick={() => {
-            window.location.href = '/patients';
-            }}
-            >
-                <span className="hero-stat-icon">+</span>
-                <strong>100</strong>
-                <small>Registered Patients</small>
-              </div>
-
-              <div
-              className="hero-stats-card"
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-              window.location.href = '/appointments';
-             }}
-              >
-                <span className="hero-stat-icon">◷</span>
-                <strong>50</strong>
-                <small>Appointments</small>
-              </div>
-
-              <div
-              className="hero-stats-card"
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-              window.location.href = '/ai-insights';
-               }}
-               >
-                <span className="hero-stat-icon">✓</span>
-                <strong>94%</strong>
-                <small>Care Follow-ups</small>
+                <span className="hero-dashboard-label">ONE PATIENT RECORD</span>
+                <h3>Everything connected</h3>
               </div>
             </div>
 
-            <div className="hero-chart-card">
-              <div className="hero-chart-heading">
-                <div>
-                  <span>Patient activity</span>
-                  <strong>This month</strong>
-                </div>
+            <ul className="hero-capability-list">
+              {CAPABILITIES.map((capability) => (
+                <li key={capability}>
+                  <Check size={15} />
+                  <span>{capability}</span>
+                </li>
+              ))}
+            </ul>
 
-                <span className="hero-chart-growth">+18.4%</span>
-              </div>
-
-              <div className="hero-chart">
-                <span className="chart-bar bar-one"></span>
-                <span className="chart-bar bar-two"></span>
-                <span className="chart-bar bar-three"></span>
-                <span className="chart-bar bar-four"></span>
-                <span className="chart-bar bar-five"></span>
-                <span className="chart-bar bar-six"></span>
-                <span className="chart-bar bar-seven"></span>
-              </div>
-
-              <div className="hero-chart-days">
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
-                <span>Sun</span>
-              </div>
-            </div>
-
-            <div
-            className="hero-ai-card"
-            role="button"
-            tabIndex={0}
-            onClick={() => {
-            window.location.href = '/ai-insights';
-            }}
-            >
-              <div className="hero-ai-icon">✦</div>
-
+            <div className="hero-ai-card">
               <div>
-                <strong>AI Health Insight</strong>
+                <strong>Insight summaries</strong>
                 <p>
-                  Follow-up recommended for 12 patients based on recent
-                  records.
+                  HealthBridge counts what is actually in the records — reviews
+                  due, incomplete profiles, results needing attention — and
+                  points a clinician at them. It does not make diagnoses.
                 </p>
               </div>
-
-              <ArrowRight size={16} />
             </div>
           </div>
         </div>

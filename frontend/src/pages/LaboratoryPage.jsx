@@ -33,8 +33,8 @@ function LaboratoryPage({ onBack, onLogout }) {
           api.getPatients(),
         ]);
 
-        setRequests(Array.isArray(labData) ? labData : []);
-        setPatients(Array.isArray(patientData) ? patientData : []);
+        setRequests(labData?.requests || []);
+        setPatients(patientData?.patients || []);
       } catch (loadError) {
         console.error('Unable to fetch lab requests:', loadError);
         setRequests([]);

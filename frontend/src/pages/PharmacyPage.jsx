@@ -27,7 +27,7 @@ function PharmacyPage({ onBack, onLogout }) {
         setIsLoading(true);
         setError('');
         const data = await api.getPharmacy();
-        setMedicines(Array.isArray(data) ? data : []);
+        setMedicines(data?.medicines || []);
       } catch (loadError) {
         console.error('Unable to fetch pharmacy inventory:', loadError);
         setError(loadError.message || 'Unable to load pharmacy inventory.');

@@ -5,12 +5,12 @@ import FeaturesSection from '../components/FeaturesSection';
 import ServicesSection from '../components/ServicesSection';
 import AIFeaturesSection from '../components/AIFeaturesSection';
 import StatsSection from '../components/StatsSection';
-import TestimonialsSection from '../components/TestimonialsSection';
+import WorkflowSection from '../components/WorkflowSection';
 import FAQSection from '../components/FAQSection';
 import ContactSection from '../components/ContactSection';
 import './LandingPage.css';
 
-function LandingPage({ onLoginClick }) {
+function LandingPage({ onLoginClick, onPatientLoginClick }) {
   const goToLogin = () => {
     if (onLoginClick) {
       onLoginClick();
@@ -20,15 +20,24 @@ function LandingPage({ onLoginClick }) {
     window.location.href = '/login';
   };
 
+  const goToPatientLogin = () => {
+    if (onPatientLoginClick) {
+      onPatientLoginClick();
+      return;
+    }
+
+    window.location.href = '/patient-portal';
+  };
+
   return (
-    <PublicLayout onLoginClick={goToLogin}>
+    <PublicLayout onLoginClick={goToLogin} onPatientLoginClick={goToPatientLogin}>
       <Hero onGetStarted={goToLogin} />
       <AboutSection />
       <FeaturesSection />
       <ServicesSection />
       <AIFeaturesSection />
       <StatsSection />
-      <TestimonialsSection />
+      <WorkflowSection />
       <FAQSection />
       <ContactSection />
     </PublicLayout>

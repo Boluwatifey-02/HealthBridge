@@ -4,7 +4,15 @@ import Brand from '../components/Brand';
 import api from '../services/api';
 import './LoginPage.css';
 
-function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
+/**
+ * Shared by staff and patient accounts, which recover their password the same
+ * way. `audience` selects which token the link belongs to; a patient link is
+ * rejected by the staff endpoint and the other way round, so this cannot be
+ * used to reset the wrong kind of account.
+ */
+function ResetPasswordPage({ token, audience = 'staff', onBackToLogin, onResetComplete }) {
+  const isPatient = audience === 'patient';
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +31,12 @@ function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
       }
 
       try {
-        await api.verifyResetToken(token);
+        if (isPatient) {
+          await api.verifyPatientResetToken(token);
+        } else {
+          await api.verifyResetToken(token);
+        }
+
         if (!cancelled) setStatus('valid');
       } catch (tokenError) {
         if (cancelled) return;
@@ -35,7 +48,7 @@ function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
     checkToken();
 
     return () => { cancelled = true; };
-  }, [token]);
+  }, [token, isPatient]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -49,7 +62,12 @@ function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
     setError('');
 
     try {
-      await api.resetPassword({ token, password, confirmPassword });
+      if (isPatient) {
+        await api.patientResetPassword({ token, password, confirmPassword });
+      } else {
+        await api.resetPassword({ token, password, confirmPassword });
+      }
+
       // Stay on this page so the user sees the confirmation before signing in.
       setStatus('done');
     } catch (submitError) {

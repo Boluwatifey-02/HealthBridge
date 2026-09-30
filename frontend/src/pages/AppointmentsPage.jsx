@@ -68,13 +68,15 @@ function AppointmentsPage({ onLogout }) {
 
         const [appointmentData, patientData] = await Promise.all([
           api.getAppointments(),
-          api.getPatients().catch(() => []),
+          api.getPatients(),
         ]);
 
+        // The list endpoints return an envelope with the rows and the total, so
+        // an empty clinic reads as an empty list rather than a failed request.
         setAppointments(
-          Array.isArray(appointmentData) ? appointmentData.map(normalizeAppointment) : [],
+          (appointmentData?.appointments || []).map(normalizeAppointment)
         );
-        setPatients(Array.isArray(patientData) ? patientData : []);
+        setPatients(patientData?.patients || []);
       } catch (loadError) {
         console.error('Unable to fetch appointments:', loadError);
         setError(loadError.message || 'Unable to load appointments from the backend.');

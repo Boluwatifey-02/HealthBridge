@@ -8,7 +8,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-function PublicLayout({ children, onLoginClick }) {
+/**
+ * Contact details come from the build environment. The footer previously printed
+ * a phone number and an address that were never verified, presented as if they
+ * were real. With nothing configured the footer points at the contact form
+ * instead of showing a number nobody answers.
+ */
+const CONTACT_EMAIL = String(import.meta.env.VITE_CONTACT_EMAIL || '').trim();
+const CONTACT_PHONE = String(import.meta.env.VITE_CONTACT_PHONE || '').trim();
+const CONTACT_ADDRESS = String(import.meta.env.VITE_CONTACT_ADDRESS || '').trim();
+
+function PublicLayout({ children, onLoginClick, onPatientLoginClick }) {
   const [page, setPage] = useState('Home');
 
   const handleLogin = () => {
@@ -18,6 +28,15 @@ function PublicLayout({ children, onLoginClick }) {
     }
 
     window.location.href = '/login';
+  };
+
+  const handlePatientLogin = () => {
+    if (onPatientLoginClick) {
+      onPatientLoginClick();
+      return;
+    }
+
+    window.location.href = '/patient-portal';
   };
 
   const handleSecurityNavigation = () => {
@@ -61,6 +80,7 @@ function PublicLayout({ children, onLoginClick }) {
         page={page}
         setPage={handleNavigation}
         onLogin={handleLogin}
+        onPatientLogin={handlePatientLogin}
       />
 
       <main>{children}</main>
@@ -108,20 +128,36 @@ function PublicLayout({ children, onLoginClick }) {
             <div className="public-footer-column">
               <h4>Contact</h4>
 
-              <a href="mailto:contact@healthbridge.ng">
-                <Mail size={15} />
-                contact@healthbridge.ng
-              </a>
+              {CONTACT_EMAIL ? (
+                <a href={`mailto:${CONTACT_EMAIL}`}>
+                  <Mail size={15} />
+                  {CONTACT_EMAIL}
+                </a>
+              ) : (
+                <button onClick={() => handleNavigation('Contact')}>
+                  <Mail size={15} />
+                  Use the contact form
+                </button>
+              )}
 
-              <a href="tel:+2348000000000">
-                <Phone size={15} />
-                +234 800 000 0000
-              </a>
+              {CONTACT_PHONE && (
+                <a href={`tel:${CONTACT_PHONE.replace(/[^+\d]/g, '')}`}>
+                  <Phone size={15} />
+                  {CONTACT_PHONE}
+                </a>
+              )}
 
-              <span>
-                <MapPin size={15} />
-                Ikeja, Lagos State
-              </span>
+              {CONTACT_ADDRESS ? (
+                <span>
+                  <MapPin size={15} />
+                  {CONTACT_ADDRESS}
+                </span>
+              ) : (
+                <span>
+                  <MapPin size={15} />
+                  Nigerian primary health centres
+                </span>
+              )}
             </div>
           </div>
 
