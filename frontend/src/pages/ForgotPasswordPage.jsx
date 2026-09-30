@@ -7,6 +7,8 @@ import './LoginPage.css';
 function ForgotPasswordPage({ onBackToLogin }) {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [note, setNote] = useState('');
+  const [resetUrl, setResetUrl] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,10 +24,14 @@ function ForgotPasswordPage({ onBackToLogin }) {
     setIsSubmitting(true);
     setError('');
     setMessage('');
+    setNote('');
+    setResetUrl('');
 
     try {
       const response = await api.forgotPassword(trimmedEmail);
       setMessage(response.message);
+      setNote(response.deliveryNote || '');
+      setResetUrl(response.resetUrl || '');
     } catch (submitError) {
       setError(submitError.message || 'Unable to process the request. Please try again.');
     } finally {
@@ -47,8 +53,9 @@ function ForgotPasswordPage({ onBackToLogin }) {
           <h1>Reset your password.</h1>
 
           <p>
-            Enter the email address registered to your HealthBridge account and
-            we will send you a secure link to choose a new password.
+            Enter the email address registered to your HealthBridge account.
+            If this deployment is configured to send email, you will receive a
+            secure link to choose a new password.
           </p>
         </div>
 
@@ -94,6 +101,32 @@ function ForgotPasswordPage({ onBackToLogin }) {
             >
               <MailCheck size={16} style={{ verticalAlign: '-3px', marginRight: '6px' }} />
               {message}
+            </div>
+          )}
+
+          {note && (
+            <p
+              style={{
+                marginTop: '0.5rem',
+                color: '#8a6d1f',
+                background: '#fdf6e3',
+                border: '1px solid #e7d9a8',
+                borderRadius: '6px',
+                padding: '0.65rem 0.8rem',
+                fontSize: '0.85rem',
+                lineHeight: 1.45,
+              }}
+            >
+              {note}
+            </p>
+          )}
+
+          {resetUrl && (
+            <div style={{ marginTop: '0.9rem' }}>
+              <a className="login-submit" href={resetUrl} style={{ display: 'inline-block', textAlign: 'center' }}>
+                Open your password reset link
+                <ArrowRight size={17} />
+              </a>
             </div>
           )}
 

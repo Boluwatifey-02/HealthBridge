@@ -273,6 +273,13 @@ async function main() {
     { key: 'DB_SSL_CA', value: caSingleLine, type: 'secret' },
     { key: 'DB_SSL_REJECT_UNAUTHORIZED', value: 'true' },
     { key: 'SEED_STAFF', value: 'true' },
+    // With no SMTP configured the API tells the user that no email was sent.
+    // Setting this to 'true' additionally returns the reset link on screen so
+    // the recovery journey can be demonstrated without a paid mail provider.
+    {
+      key: 'DEMO_PASSWORD_RESET_LINK',
+      value: values.DEMO_PASSWORD_RESET_LINK || 'true',
+    },
     { key: 'SEED_ADMIN_PASSWORD', value: adminPassword, type: 'secret' },
     { key: 'SEED_DOCTOR_PASSWORD', value: doctorPassword, type: 'secret' },
     { key: 'SEED_RECEPTION_PASSWORD', value: receptionPassword, type: 'secret' },

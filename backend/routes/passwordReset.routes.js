@@ -28,6 +28,15 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+// A deployment with no SMTP credentials cannot email anything. Rather than
+// telling the user a message was sent, the API reports that email is not
+// configured so the interface can be honest about it. When the operator
+// explicitly enables the demo link, the link is returned so the recovery
+// journey still completes without a paid mail provider.
+function isDemoLinkEnabled() {
+  return process.env.DEMO_PASSWORD_RESET_LINK === 'true';
+}
+
 function isStrongEnough(password) {
   if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
     return false;
@@ -72,12 +81,15 @@ router.post('/forgot-password', async (req, res) => {
     return res.status(400).json({ message: 'Email address is required.' });
   }
 
+  const emailReady = isEmailConfigured();
   const user = await findUserByEmail(email);
 
-  // Same shape of reply in every case: no account enumeration.
+  // Same shape of reply whether or not the account exists: no enumeration.
   const acknowledgement = {
-    message: `If an account exists for ${email}, a password reset link has been sent.`,
-    emailDelivery: isEmailConfigured() ? 'email' : 'server log',
+    message: emailReady
+      ? `If an account exists for ${email}, a password reset link has been sent.`
+      : `If an account exists for ${email}, a password reset link has been created.`,
+    emailDelivery: emailReady ? 'email' : 'not-configured',
   };
 
   if (!user) {
@@ -105,6 +117,21 @@ router.post('/forgot-password', async (req, res) => {
     user.fullName || user.full_name || 'there',
     resetUrl
   );
+
+  // Be explicit: with no mail provider there is no inbox to check.
+  if (!emailReady) {
+    acknowledgement.deliveryNote =
+      'This deployment has no email provider configured, so no message was sent.';
+
+    if (isDemoLinkEnabled()) {
+      acknowledgement.resetUrl = resetUrl;
+      acknowledgement.deliveryNote +=
+        ' Demo mode is enabled, so the reset link is shown here instead.';
+    } else {
+      acknowledgement.deliveryNote +=
+        ' Ask an administrator to reset the account, or configure SMTP.';
+    }
+  }
 
   return res.json(acknowledgement);
 });
