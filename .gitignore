@@ -19,6 +19,7 @@ node_modules/
 # Deployment secrets
 deploy/render-secrets.env
 deploy/*.local
+deploy/admin-credentials.txt
 
 # Build outputs
 /dist/
