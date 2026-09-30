@@ -71,6 +71,13 @@ async function initializeDatabase() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      // The service and the managed database both sit behind idle timeouts, so a
+      // pooled socket is regularly closed while it waits. Without keep-alive the
+      // pool keeps handing out those dead sockets and the next request fails as
+      // a server error rather than reconnecting.
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
+      connectTimeout: 15000,
       ...sslOptions,
     });
 
@@ -102,12 +109,41 @@ async function testConnection() {
   return initializeDatabase();
 }
 
+/**
+ * Connection-level failures are retried once, because the only thing that can
+ * fail this way is a socket the pool had already handed over. Retrying the
+ * statement on a fresh connection turns a spurious server error back into the
+ * intended result. A failure that is not a dropped connection, such as a
+ * constraint violation, is reported as it is rather than repeated.
+ */
+function isDroppedConnection(error) {
+  const code = error && error.code;
+
+  return (
+    code === 'PROTOCOL_CONNECTION_LOST' ||
+    code === 'ECONNRESET' ||
+    code === 'ETIMEDOUT' ||
+    code === 'EPIPE' ||
+    code === 'ECONNREFUSED' ||
+    code === 'ENOTFOUND' ||
+    code === 'EHOSTUNREACH' ||
+    code === 'PROTOCOL_SEQUENCE_TIMEOUT'
+  );
+}
+
 async function query(sql, params = []) {
   if (isFallbackMode() || !pool) {
     return [[], []];
   }
 
-  return pool.query(sql, params);
+  try {
+    return await pool.query(sql, params);
+  } catch (error) {
+    if (!isDroppedConnection(error)) throw error;
+
+    console.warn('Database connection was dropped; retrying the statement once.');
+    return pool.query(sql, params);
+  }
 }
 
 /**
@@ -119,7 +155,14 @@ async function getConnection() {
     throw new Error('The HealthBridge database is unavailable.');
   }
 
-  return pool.getConnection();
+  try {
+    return await pool.getConnection();
+  } catch (error) {
+    if (!isDroppedConnection(error)) throw error;
+
+    console.warn('Database connection was dropped; taking a fresh one.');
+    return pool.getConnection();
+  }
 }
 
 async function findUserByEmail(email) {
