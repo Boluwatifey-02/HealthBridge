@@ -1,6 +1,7 @@
 ﻿const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
+const { ensureSchema } = require('./ensureSchema');
 require('dotenv').config();
 
 let pool = null;
@@ -75,39 +76,7 @@ async function initializeDatabase() {
 
     await pool.query('SELECT 1');
 
-    const schemaPath = path.join(__dirname, '..', 'schema.sql');
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    const statements = schemaSql
-      .split(';')
-      .map((statement) => statement.trim())
-      .filter((statement) => statement.length > 0);
-
-    for (const statement of statements) {
-      await pool.query(statement);
-    }
-
-    // CREATE TABLE IF NOT EXISTS leaves an already-created table untouched, so
-    // columns added to schema.sql after the first deploy have to be applied
-    // separately. MySQL has no "ADD COLUMN IF NOT EXISTS", so each column is
-    // checked against information_schema first. Every step is idempotent.
-    const additiveColumns = [
-      { table: 'appointments', column: 'provider', definition: 'VARCHAR(150)' },
-    ];
-
-    for (const { table, column, definition } of additiveColumns) {
-      const [existing] = await pool.query(
-        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
-        [process.env.DB_NAME, table, column]
-      );
-
-      if (existing.length === 0) {
-        // Identifier is a literal from the list above, never user input.
-        await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
-        console.log(`Applied migration: ${table}.${column}`);
-      }
-    }
-
+    await ensureSchema(pool, process.env.DB_NAME, (message) => console.log(message));
     databaseAvailable = true;
     databaseError = null;
     console.log('MySQL database connection successful and HealthBridge schema verified.');
@@ -141,20 +110,16 @@ async function query(sql, params = []) {
   return pool.query(sql, params);
 }
 
-async function getDashboardMetrics() {
-  const [patientRows] = await query('SELECT COUNT(*) AS total FROM patients');
-  const [appointmentRows] = await query('SELECT COUNT(*) AS total FROM appointments');
-  const [lowStockRows] = await query(
-    'SELECT COUNT(*) AS total FROM medicines WHERE stock_quantity <= reorder_level'
-  );
-  const [labRows] = await query("SELECT COUNT(*) AS total FROM lab_requests WHERE status = 'Pending'");
+/**
+ * Checks out a single pooled connection for work that must run in a
+ * transaction. Callers must call release() in a finally block.
+ */
+async function getConnection() {
+  if (isFallbackMode() || !pool) {
+    throw new Error('The HealthBridge database is unavailable.');
+  }
 
-  return {
-    totalPatients: Number(patientRows[0]?.total || 0),
-    appointments: Number(appointmentRows[0]?.total || 0),
-    lowStockItems: Number(lowStockRows[0]?.total || 0),
-    pendingLabRequests: Number(labRows[0]?.total || 0),
-  };
+  return pool.getConnection();
 }
 
 async function findUserByEmail(email) {
@@ -172,6 +137,6 @@ module.exports = {
   getDatabaseError,
   testConnection,
   query,
-  getDashboardMetrics,
+  getConnection,
   findUserByEmail,
 };

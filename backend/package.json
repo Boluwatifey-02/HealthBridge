@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "db:init": "node config/initDb.js"
+    "db:init": "node config/initDb.js",
+    "seed:demo": "node scripts/seedDemonstrationData.js",
+    "seed:demo:reset": "node scripts/seedDemonstrationData.js --reset"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

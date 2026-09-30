@@ -1,7 +1,6 @@
 require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
 const mysql = require('mysql2/promise');
+const { ensureSchema } = require('./ensureSchema');
 
 // TLS is opt-in: it activates only when DB_SSL_CA is present, so local MySQL
 // development over localhost continues to work without certificates.
@@ -42,16 +41,7 @@ async function initializeDatabase() {
   await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\``);
   await connection.query(`USE \`${process.env.DB_NAME}\``);
 
-  const schemaPath = path.join(__dirname, '..', 'schema.sql');
-  const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-  const statements = schemaSql
-    .split(';')
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0);
-
-  for (const statement of statements) {
-    await connection.query(statement);
-  }
+  await ensureSchema(connection, process.env.DB_NAME, (message) => console.log(message));
 
   console.log(`Schema applied successfully to database: ${process.env.DB_NAME}`);
   await connection.end();

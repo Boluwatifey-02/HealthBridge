@@ -5,47 +5,23 @@ const { query, isFallbackMode } = require('../config/db');
 const { ApiError, asyncHandler, DATABASE_UNAVAILABLE_MESSAGE } = require('../lib/http');
 const { recordAudit } = require('../lib/audit');
 const { isEmailConfigured, sendPasswordResetEmail } = require('../services/email');
-const {
-  TTL_MINUTES,
-  issueToken,
-  findValidToken,
-  consumeTokenAndSetPassword,
-} = require('../services/resetTokens');
+const { issueToken, findValidToken, consumeTokenAndSetPassword } = require('../services/resetTokens');
+const { getFrontendOrigin } = require('./passwordReset.routes');
 const v = require('../lib/validation');
 
 const router = express.Router();
 
 const BCRYPT_ROUNDS = 10;
 
-/**
- * The public origin the reset link points at. Falls back to the configured
- * frontend origin so a link is always produced on a single-domain deployment.
- */
-function getFrontendOrigin() {
-  const configured = String(process.env.FRONTEND_ORIGIN || '')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
-  return configured[0] || 'http://localhost:5173';
-}
-
-/**
- * With no SMTP credentials this deployment cannot send mail. Rather than
- * telling the user a message is on its way, the API reports the truth so the
- * interface can say something accurate. The link is only ever returned when the
- * operator has explicitly enabled the demo mode.
- */
 function isDemoLinkEnabled() {
   return process.env.DEMO_PASSWORD_RESET_LINK === 'true';
 }
 
 /*
- * Step 1: request a reset link.
+ * Step 1: a patient requests a reset link.
  *
- * The response is identical whether or not the account exists, so this endpoint
- * cannot be used to discover which addresses are registered. Only a real account
- * is actually sent a link.
+ * Mirrors the staff flow exactly, including the identical reply for unknown
+ * addresses so this cannot be used to discover which emails belong to patients.
  */
 router.post(
   '/forgot-password',
@@ -56,11 +32,13 @@ router.post(
 
     const [rows] = isFallbackMode()
       ? [[]]
-      : await query('SELECT id, full_name, email FROM staff WHERE email = ? LIMIT 1', [email]);
+      : await query(
+          'SELECT id, full_name, email, status FROM patients WHERE email = ? LIMIT 1',
+          [email]
+        );
 
-    const user = rows[0];
+    const patient = rows[0];
 
-    // Same reply whether or not the account exists: no enumeration.
     const acknowledgement = {
       message: emailReady
         ? `If an account exists for ${email}, a password reset link has been sent.`
@@ -68,14 +46,14 @@ router.post(
       emailDelivery: emailReady ? 'email' : 'not-configured',
     };
 
-    if (!user) {
+    if (!patient) {
       return res.json(acknowledgement);
     }
 
-    const { token } = await issueToken('staff', user.id);
-    const resetUrl = `${getFrontendOrigin()}/reset-password?token=${token}`;
+    const { token } = await issueToken('patient', patient.id);
+    const resetUrl = `${getFrontendOrigin()}/patient-reset-password?token=${token}`;
 
-    await sendPasswordResetEmail(user.email, user.full_name || 'there', resetUrl);
+    await sendPasswordResetEmail(patient.email, patient.full_name || 'there', resetUrl);
 
     if (!emailReady) {
       acknowledgement.deliveryNote =
@@ -86,7 +64,7 @@ router.post(
         acknowledgement.deliveryNote += ' Demo mode is enabled, so the reset link is shown here instead.';
       } else {
         acknowledgement.deliveryNote +=
-          ' Ask an administrator to reset the account, or configure SMTP.';
+          ' Please contact the clinic, or configure SMTP so reset emails can be sent.';
       }
     }
 
@@ -94,10 +72,6 @@ router.post(
   })
 );
 
-/*
- * Step 2: confirm a token is still usable, so the form can be shown or rejected
- * before the user types a new password.
- */
 router.get(
   '/reset-password/verify',
   asyncHandler(async (req, res) => {
@@ -107,7 +81,7 @@ router.get(
       throw ApiError.badRequest('A reset token is required.');
     }
 
-    const record = await findValidToken('staff', token);
+    const record = await findValidToken('patient', token);
 
     if (!record) {
       throw ApiError.badRequest('This reset link is invalid or has expired.');
@@ -117,10 +91,6 @@ router.get(
   })
 );
 
-/*
- * Step 3: set the new password. The token is consumed in the same transaction
- * that writes the new hash, so a link cannot be replayed after success.
- */
 router.post(
   '/reset-password',
   asyncHandler(async (req, res) => {
@@ -139,24 +109,20 @@ router.post(
     }
 
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
-    const applied = await consumeTokenAndSetPassword('staff', trimmedToken, passwordHash);
+    const applied = await consumeTokenAndSetPassword('patient', trimmedToken, passwordHash);
 
     if (!applied) {
       throw ApiError.badRequest('This reset link is invalid or has expired.');
     }
 
     await recordAudit(
-      { id: null, fullName: 'Password reset', role: null },
-      'STAFF_PASSWORD_RESET',
-      'Reset a staff password using an emailed token.'
+      { id: null, fullName: 'Patient password reset', role: 'Patient' },
+      'PATIENT_PASSWORD_RESET',
+      'A patient reset their portal password.'
     );
-
-    console.log('A staff password was reset using an emailed token.');
 
     return res.json({ message: 'Your password has been updated. You can now sign in.' });
   })
 );
 
 module.exports = router;
-module.exports.getFrontendOrigin = getFrontendOrigin;
-module.exports.TTL_MINUTES = TTL_MINUTES;

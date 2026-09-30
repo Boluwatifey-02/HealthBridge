@@ -10,6 +10,8 @@ const errorHandler = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth.routes');
 const passwordResetRoutes = require('./routes/passwordReset.routes');
+const patientAuthRoutes = require('./routes/patientAuth.routes');
+const patientPasswordResetRoutes = require('./routes/patientPasswordReset.routes');
 const patientRoutes = require('./routes/patients.routes');
 const appointmentRoutes = require('./routes/appointments.routes');
 const consultationRoutes = require('./routes/consultations.routes');
@@ -20,6 +22,7 @@ const aiRoutes = require('./routes/ai.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const adminRoutes = require('./routes/admin.routes');
 const staffRoutes = require('./routes/staff.routes');
+const contactRoutes = require('./routes/contact.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -61,17 +64,29 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// The ceiling is configurable so an acceptance run against a development
+// deployment is not throttled by the production limit. The default is
+// deliberately low and applies everywhere else.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 25,
+  max: Number(process.env.LOGIN_RATE_LIMIT_MAX || 25),
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 // Reset endpoints are rate limited harder: a request mints a usable token.
+// The ceiling is configurable for the same reason as the login limiter.
 const resetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: Number(process.env.RESET_RATE_LIMIT_MAX || 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// An unauthenticated write, so it gets its own modest limit.
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.CONTACT_RATE_LIMIT_MAX || 5),
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -80,6 +95,10 @@ app.use(generalLimiter);
 app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth/forgot-password', resetLimiter);
 app.use('/api/auth/reset-password', resetLimiter);
+app.use('/api/patient-auth/login', loginLimiter);
+app.use('/api/patient-auth/set-password', resetLimiter);
+app.use('/api/patient-auth/forgot-password', resetLimiter);
+app.use('/api/patient-auth/reset-password', resetLimiter);
 
 app.get('/api/health', (req, res) => {
   const healthy = !isFallbackMode();
@@ -93,6 +112,8 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', passwordResetRoutes);
+app.use('/api/patient-auth', patientAuthRoutes);
+app.use('/api/patient-auth', patientPasswordResetRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/consultations', consultationRoutes);
@@ -103,6 +124,9 @@ app.use('/api/ai-insights', aiRoutes);
 app.use('/api/dashboard-summary', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/staff', staffRoutes);
+// The contact form is public but rate limited more tightly than ordinary reads,
+// because it is an unauthenticated write.
+app.use('/api/contact', contactLimiter, contactRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found.' });

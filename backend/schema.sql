@@ -25,10 +25,18 @@ CREATE TABLE IF NOT EXISTS patients (
   age INT,
   gender VARCHAR(20),
   phone VARCHAR(50),
+  email VARCHAR(120),
+  password_hash VARCHAR(255),
   address VARCHAR(255),
+  occupation VARCHAR(120),
+  national_id VARCHAR(40),
+  emergency_contact VARCHAR(80),
   blood_group VARCHAR(10),
+  genotype VARCHAR(10),
   allergies VARCHAR(255),
   `condition` VARCHAR(255),
+  medical_history TEXT,
+  notes TEXT,
   status VARCHAR(40) DEFAULT 'Active',
   last_visit DATE,
   branch_id INT,
@@ -166,6 +174,39 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   UNIQUE KEY uniq_password_reset_token_hash (token_hash),
   KEY idx_password_reset_staff (staff_id)
 );
+
+-- Patient portal password reset. Kept separate from the staff table above
+-- because staff_id is a non-null foreign key to staff, and a patient must be
+-- able to recover their own account without a staff record existing. Only the
+-- SHA-256 hash of the token is stored, so a database leak cannot be replayed as
+-- a working reset link. One active token per patient.
+CREATE TABLE IF NOT EXISTS patient_password_reset_tokens (
+  id VARCHAR(50) PRIMARY KEY,
+  patient_id VARCHAR(50) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_patient_reset_token_hash (token_hash),
+  KEY idx_patient_reset_patient (patient_id)
+);
+
+-- Enquiries sent from the public contact form. Without this the form accepted
+-- a message, showed a success alert and discarded it, so anyone who got in touch
+-- believed they had reached the clinic when nothing had been recorded.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(120) NOT NULL,
+  subject VARCHAR(255),
+  message TEXT NOT NULL,
+  status ENUM('New', 'Read', 'Replied') DEFAULT 'New',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Secondary indexes are created by backend/config/db.js, which tolerates the
+-- "index already exists" error. MySQL has no CREATE INDEX IF NOT EXISTS.
 
 INSERT INTO branches (id, name, location)
 SELECT 1, 'Main Centre', 'Lagos'
