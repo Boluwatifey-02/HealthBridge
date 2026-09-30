@@ -88,13 +88,24 @@ async function initializeDatabase() {
 
     // CREATE TABLE IF NOT EXISTS leaves an already-created table untouched, so
     // columns added to schema.sql after the first deploy have to be applied
-    // separately. These are idempotent and safe to run on every start.
-    const additiveMigrations = [
-      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS provider VARCHAR(150)',
+    // separately. MySQL has no "ADD COLUMN IF NOT EXISTS", so each column is
+    // checked against information_schema first. Every step is idempotent.
+    const additiveColumns = [
+      { table: 'appointments', column: 'provider', definition: 'VARCHAR(150)' },
     ];
 
-    for (const migration of additiveMigrations) {
-      await pool.query(migration);
+    for (const { table, column, definition } of additiveColumns) {
+      const [existing] = await pool.query(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+        [process.env.DB_NAME, table, column]
+      );
+
+      if (existing.length === 0) {
+        // Identifier is a literal from the list above, never user input.
+        await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+        console.log(`Applied migration: ${table}.${column}`);
+      }
     }
 
     databaseAvailable = true;
