@@ -50,8 +50,8 @@ function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
 
     try {
       await api.resetPassword({ token, password, confirmPassword });
+      // Stay on this page so the user sees the confirmation before signing in.
       setStatus('done');
-      onResetComplete();
     } catch (submitError) {
       setError(submitError.message || 'Unable to update your password. Please try again.');
     } finally {
@@ -164,10 +164,10 @@ function ResetPasswordPage({ token, onBackToLogin, onResetComplete }) {
         {status === 'done' && (
           <div className="login-form">
             <div style={{ color: '#0f766e', fontWeight: 600, marginBottom: '1rem' }}>
-              Your password has been updated.
+              Your password has been updated. You can now sign in with your new password.
             </div>
-            <button type="button" className="login-submit" onClick={onBackToLogin}>
-              Sign in with your new password
+            <button type="button" className="login-submit" onClick={onResetComplete}>
+              Go to sign in
               <ArrowRight size={17} />
             </button>
           </div>
