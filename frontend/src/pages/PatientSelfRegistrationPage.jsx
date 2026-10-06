@@ -73,7 +73,7 @@ function PatientSelfRegistrationPage({ onBack, onRegistered }) {
         </button>
 
         <section className="registration-heading">
-          <span className="registration-label">CREATE YOUR ACCOUNT</span>
+          <span className="registration-label">CREATE PATIENT ACCOUNT</span>
           <h1>Register for the patient portal.</h1>
           <p>
             Create a secure account to access your appointments, prescriptions,

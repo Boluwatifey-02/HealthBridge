@@ -25,25 +25,24 @@ function PatientLoginPage({ onLogin, onForgotPassword, onRegisterClick, error })
   };
 
   return (
-    <div className="login-page">
-      <header className="login-header">
+    <div className="patient-login-page">
+      <header className="patient-login-header">
         <Brand />
-        <a className="login-staff-link" href="/login">Staff sign in</a>
+        <a className="patient-login-staff-link" href="/login">Staff sign in</a>
       </header>
 
-      <main className="login-main">
-        <section className="login-card">
-          <div className="login-icon">
+      <main className="patient-login-main">
+        <section className="patient-login-card">
+          <div className="patient-login-icon">
             <UserRound size={22} />
           </div>
 
           <h1>Patient portal</h1>
-          <p className="login-subtitle">
-            Sign in with the email address the clinic has on your record to see
-            your appointments, prescriptions and results.
+          <p className="patient-login-subtitle">
+            Sign in to access your appointments, prescriptions and test results.
           </p>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form className="patient-login-form" onSubmit={handleSubmit}>
             <label>
               Email address
               <input
@@ -67,26 +66,26 @@ function PatientLoginPage({ onLogin, onForgotPassword, onRegisterClick, error })
             </label>
 
             {error && (
-              <p className="login-error" role="alert">
+              <p className="patient-login-error" role="alert">
                 {error}
               </p>
             )}
 
-            <button type="submit" className="login-submit" disabled={busy}>
+            <button type="submit" className="patient-login-submit" disabled={busy}>
               <Lock size={16} />
               {busy ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
-          <button type="button" className="login-forgot" onClick={onForgotPassword}>
+          <button type="button" className="patient-login-forgot" onClick={onForgotPassword}>
             Forgotten your password?
           </button>
 
-          <button type="button" className="login-submit" onClick={onRegisterClick} style={{ marginTop: '0.5rem', background: 'transparent', color: 'var(--burgundy)', border: '1px solid var(--burgundy)' }}>
+          <button type="button" className="patient-login-register" onClick={onRegisterClick}>
             Create an account
           </button>
 
-          <p className="login-note">
+          <p className="patient-login-note">
             No portal access yet? Register to create your account.
           </p>
         </section>
