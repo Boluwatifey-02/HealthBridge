@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UserRound, Lock } from 'lucide-react';
 import Brand from '../components/Brand';
-import './LoginPage.css';
+import './PatientLoginPage.css';
 
 /**
  * Patient portal sign-in.

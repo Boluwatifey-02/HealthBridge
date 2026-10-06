@@ -1,0 +1,209 @@
+.patient-login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+}
+
+.patient-login-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+
+.patient-login-staff-link {
+  color: var(--burgundy);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--burgundy);
+  border-radius: 4px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.patient-login-staff-link:hover {
+  background: var(--burgundy);
+  color: var(--white);
+}
+
+.patient-login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.patient-login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.patient-login-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(57, 24, 28, 0.06);
+  color: var(--burgundy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.patient-login-card h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.patient-login-subtitle {
+  color: var(--charcoal-soft);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 0 2rem;
+}
+
+.patient-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  text-align: left;
+}
+
+.patient-login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.patient-login-form input {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: var(--charcoal);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.patient-login-form input:focus {
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 3px rgba(57, 24, 28, 0.08);
+}
+
+.patient-login-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: rgba(159, 29, 45, 0.08);
+  color: var(--burgundy-deep);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.patient-login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--burgundy);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.patient-login-submit:hover:not(:disabled) {
+  background: var(--burgundy-deep);
+}
+
+.patient-login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.patient-login-forgot {
+  display: block;
+  margin: 1rem auto 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--charcoal-soft);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.patient-login-forgot:hover {
+  color: var(--burgundy);
+}
+
+.patient-login-register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 14px 20px;
+  border: 1px solid var(--burgundy);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--burgundy);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.patient-login-register:hover {
+  background: var(--burgundy);
+  color: var(--white);
+}
+
+.patient-login-note {
+  margin-top: 1.5rem;
+  color: var(--charcoal-soft);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .patient-login-card {
+    padding: 1.75rem;
+  }
+
+  .patient-login-card h1 {
+    font-size: 1.5rem;
+  }
+}

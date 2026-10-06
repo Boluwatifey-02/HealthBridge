@@ -11,7 +11,7 @@ import {
 import Brand from '../components/Brand';
 import api from '../services/api';
 import { useApiData } from '../hooks/useApiData';
-import './DashboardPage.css';
+import './PatientPortalPage.css';
 
 function formatDate(value) {
   if (!value) return 'Not recorded';
@@ -42,17 +42,17 @@ function PatientPortalPage({ onLogout }) {
   const patient = data?.patient;
 
   return (
-    <main className="dashboard-page">
-      <header className="dashboard-header">
+    <main className="patient-portal-page">
+      <header className="patient-portal-header">
         <Brand />
 
-        <div className="dashboard-header-right">
+        <div className="patient-portal-header-right">
           <span>Patient portal</span>
 
-          <div className="dashboard-header-actions">
+          <div className="patient-portal-header-actions">
             <button
               type="button"
-              className="dashboard-header-button"
+              className="patient-portal-header-button"
               onClick={refresh}
               disabled={loading}
             >
@@ -60,22 +60,22 @@ function PatientPortalPage({ onLogout }) {
               Refresh
             </button>
 
-            <button type="button" className="dashboard-header-button" onClick={onLogout}>
+            <button type="button" className="patient-portal-header-button" onClick={onLogout}>
               <LogOut size={15} />
               Sign out
             </button>
 
-            <div className="dashboard-user" title={patient?.fullName || ''}>
+            <div className="patient-portal-user" title={patient?.fullName || ''}>
               {(patient?.fullName || 'P').charAt(0).toUpperCase()}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="dashboard-container">
-        <section className="dashboard-welcome">
+      <div className="patient-portal-container">
+        <section className="patient-portal-welcome">
           <div>
-            <span className="dashboard-label">MY HEALTH RECORD</span>
+            <span className="patient-portal-label">MY HEALTH RECORD</span>
             <h1>{patient ? `Hello, ${patient.fullName.split(' ')[0]}.` : 'Your record.'}</h1>
             <p>
               {patient?.lastVisit
@@ -86,7 +86,7 @@ function PatientPortalPage({ onLogout }) {
         </section>
 
         {error && (
-          <section className="dashboard-error" role="alert">
+          <section className="patient-portal-error" role="alert">
             <AlertTriangle size={16} />
             <span>Could not load your record: {error}</span>
             <button type="button" onClick={refresh}>Try again</button>
@@ -94,21 +94,14 @@ function PatientPortalPage({ onLogout }) {
         )}
 
         {loading && !data && (
-          <section className="dashboard-panel">
-            <div className="activity-list">
-              <div>
-                <strong>Loading your record…</strong>
-                <span>Fetching your details from the clinic.</span>
-              </div>
-            </div>
-          </section>
+          <div className="patient-portal-loading">Loading your record…</div>
         )}
 
         {patient && (
           <>
-            <section className="dashboard-stats">
-              <article className="dashboard-stat-card">
-                <div className="dashboard-stat-icon">
+            <section className="patient-portal-stats">
+              <article className="patient-portal-stat-card">
+                <div className="patient-portal-stat-icon">
                   <CalendarDays size={20} />
                 </div>
                 <span>Appointments</span>
@@ -116,8 +109,8 @@ function PatientPortalPage({ onLogout }) {
                 <small>booked and not cancelled</small>
               </article>
 
-              <article className="dashboard-stat-card">
-                <div className="dashboard-stat-icon">
+              <article className="patient-portal-stat-card">
+                <div className="patient-portal-stat-icon">
                   <Pill size={20} />
                 </div>
                 <span>Prescriptions</span>
@@ -125,8 +118,8 @@ function PatientPortalPage({ onLogout }) {
                 <small>issued to you</small>
               </article>
 
-              <article className="dashboard-stat-card">
-                <div className="dashboard-stat-icon">
+              <article className="patient-portal-stat-card">
+                <div className="patient-portal-stat-icon">
                   <FlaskConical size={20} />
                 </div>
                 <span>Lab requests</span>
@@ -134,8 +127,8 @@ function PatientPortalPage({ onLogout }) {
                 <small>tests requested</small>
               </article>
 
-              <article className="dashboard-stat-card">
-                <div className="dashboard-stat-icon">
+              <article className="patient-portal-stat-card">
+                <div className="patient-portal-stat-icon">
                   <UserRound size={20} />
                 </div>
                 <span>Blood group</span>
@@ -144,20 +137,20 @@ function PatientPortalPage({ onLogout }) {
               </article>
             </section>
 
-            <section className="dashboard-main-grid">
-              <article className="dashboard-panel">
-                <div className="dashboard-panel-heading">
+            <section className="patient-portal-main-grid">
+              <article className="patient-portal-panel">
+                <div className="patient-portal-panel-heading">
                   <div>
-                    <span className="dashboard-label">SCHEDULE</span>
+                    <span className="patient-portal-label">SCHEDULE</span>
                     <h2>Your appointments</h2>
                   </div>
                 </div>
 
-                <div className="appointment-list">
+                <div className="patient-appointment-list">
                   {(data.appointments || []).length > 0 ? (
                     data.appointments.map((appointment) => (
-                      <div className="appointment-row" key={appointment.id}>
-                        <div className="appointment-time">
+                      <div className="patient-appointment-row" key={appointment.id}>
+                        <div className="patient-appointment-time">
                           {formatDate(appointment.date).split(' ').slice(0, 2).join(' ')}
                         </div>
                         <div>
@@ -169,8 +162,8 @@ function PatientPortalPage({ onLogout }) {
                           </span>
                         </div>
                         <span
-                          className={`appointment-status ${
-                            appointment.status === 'Pending' ? 'pending' : ''
+                          className={`patient-appointment-status ${
+                            appointment.status === 'Pending' ? 'pending' : 'confirmed'
                           }`}
                         >
                           {appointment.status}
@@ -178,60 +171,64 @@ function PatientPortalPage({ onLogout }) {
                       </div>
                     ))
                   ) : (
-                    <div className="appointment-row">
-                      <div className="appointment-time">—</div>
+                    <div className="patient-appointment-row">
+                      <div className="patient-appointment-time">—</div>
                       <div>
                         <strong>No appointments on record</strong>
                         <span>Book one at reception.</span>
                       </div>
-                      <span className="appointment-status pending">None</span>
+                      <span className="patient-appointment-status pending">None</span>
                     </div>
                   )}
                 </div>
               </article>
 
-              <article className="dashboard-panel dashboard-activity">
-                <div className="dashboard-panel-heading">
+              <article className="patient-portal-panel">
+                <div className="patient-portal-panel-heading">
                   <div>
-                    <span className="dashboard-label">MEDICINE</span>
+                    <span className="patient-portal-label">MEDICINE</span>
                     <h2>Your prescriptions</h2>
                   </div>
                 </div>
 
-                <div className="activity-list">
+                <div className="patient-activity-list">
                   {(data.prescriptions || []).length > 0 ? (
                     data.prescriptions.map((prescription) => (
-                      <div key={prescription.id}>
-                        <strong>{prescription.medicineName}</strong>
-                        <span>
-                          {prescription.dosage} · {prescription.frequency} ·{' '}
-                          {prescription.duration} — {prescription.status}
-                        </span>
+                      <div className="patient-activity-row" key={prescription.id}>
+                        <div>
+                          <strong>{prescription.medicineName}</strong>
+                          <span>
+                            {prescription.dosage} · {prescription.frequency} ·{' '}
+                            {prescription.duration} — {prescription.status}
+                          </span>
+                        </div>
                       </div>
                     ))
                   ) : (
-                    <div>
-                      <strong>No prescriptions</strong>
-                      <span>Anything a doctor prescribes will appear here.</span>
+                    <div className="patient-activity-row">
+                      <div>
+                        <strong>No prescriptions</strong>
+                        <span>Anything a doctor prescribes will appear here.</span>
+                      </div>
                     </div>
                   )}
                 </div>
               </article>
             </section>
 
-            <section className="dashboard-panel">
-              <div className="dashboard-panel-heading">
+            <section className="patient-portal-panel">
+              <div className="patient-portal-panel-heading">
                 <div>
-                  <span className="dashboard-label">LABORATORY</span>
+                  <span className="patient-portal-label">LABORATORY</span>
                   <h2>Test results</h2>
                 </div>
               </div>
 
-              <div className="appointment-list">
+              <div className="patient-lab-list">
                 {(data.labResults || []).length > 0 ? (
                   data.labResults.map((request) => (
-                    <div className="appointment-row" key={request.id}>
-                      <div className="appointment-time">
+                    <div className="patient-lab-row" key={request.id}>
+                      <div className="patient-appointment-time">
                         {formatDate(request.requestDate).split(' ').slice(0, 2).join(' ')}
                       </div>
                       <div>
@@ -242,31 +239,31 @@ function PatientPortalPage({ onLogout }) {
                             : 'No result has been recorded yet.'}
                         </span>
                       </div>
-                      <span className="appointment-status pending">{request.status}</span>
+                      <span className="patient-appointment-status pending">{request.status}</span>
                     </div>
                   ))
                 ) : (
-                  <div className="appointment-row">
-                    <div className="appointment-time">—</div>
+                  <div className="patient-lab-row">
+                    <div className="patient-appointment-time">—</div>
                     <div>
                       <strong>No laboratory requests</strong>
                       <span>Tests your doctor requests will appear here.</span>
                     </div>
-                    <span className="appointment-status pending">None</span>
+                    <span className="patient-appointment-status pending">None</span>
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="dashboard-panel">
-              <div className="dashboard-panel-heading">
+            <section className="patient-portal-panel">
+              <div className="patient-portal-panel-heading">
                 <div>
-                  <span className="dashboard-label">ABOUT YOU</span>
+                  <span className="patient-portal-label">ABOUT YOU</span>
                   <h2>Details the clinic holds</h2>
                 </div>
               </div>
 
-              <div className="appointment-list">
+              <div className="patient-details-list">
                 {[
                   ['Date of birth / age', patient.age ? `${patient.age} years` : 'Not recorded'],
                   ['Gender', patient.gender || 'Not recorded'],
@@ -275,18 +272,14 @@ function PatientPortalPage({ onLogout }) {
                   ['Allergies', patient.allergies || 'None recorded'],
                   ['Current condition', patient.condition || 'None recorded'],
                 ].map(([label, value]) => (
-                  <div className="appointment-row" key={label}>
-                    <div className="appointment-time" style={{ minWidth: '9rem' }}>
-                      {label}
-                    </div>
-                    <div>
-                      <strong>{value}</strong>
-                    </div>
+                  <div className="patient-details-row" key={label}>
+                    <span className="patient-details-label">{label}</span>
+                    <span className="patient-details-value">{value}</span>
                   </div>
                 ))}
               </div>
 
-              <p className="dashboard-note">
+              <p className="patient-portal-note">
                 If something here is wrong, tell reception and they can correct
                 your record.
               </p>
