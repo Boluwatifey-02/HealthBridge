@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import {
-  ArrowRight,
+  ArrowLeft,
   UserRound,
-  Phone,
   HeartPulse,
   ShieldCheck,
   Save,
