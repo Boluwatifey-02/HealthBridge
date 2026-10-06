@@ -17,13 +17,12 @@ function LoginPage({ onLogin, onPatientLoginClick, onForgotPassword, error }) {
         </div>
 
         <div className="login-header">
-          <span className="login-label">HEALTHCARE ACCESS</span>
+          <span className="login-label">STAFF ACCESS</span>
 
-          <h1>Welcome back.</h1>
+          <h1>Staff sign in.</h1>
 
           <p>
-            Sign in to access your HealthBridge healthcare management
-            workspace.
+            Sign in to access the HealthBridge healthcare management workspace.
           </p>
         </div>
 
