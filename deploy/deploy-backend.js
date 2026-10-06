@@ -273,6 +273,11 @@ async function main() {
     { key: 'DB_SSL_CA', value: caSingleLine, type: 'secret' },
     { key: 'DB_SSL_REJECT_UNAUTHORIZED', value: 'true' },
     { key: 'SEED_STAFF', value: 'true' },
+    // A freshly provisioned database is seeded automatically on the first boot,
+    // so the live dashboard is populated immediately once an Aiven MySQL service
+    // exists. Idempotent and guarded on the patients table being empty, so it
+    // never touches an installation that already holds records.
+    { key: 'SEED_DEMO_DATA', value: 'true' },
     // With no SMTP configured the API tells the user that no email was sent.
     // Setting this to 'true' additionally returns the reset link on screen so
     // the recovery journey can be demonstrated without a paid mail provider.

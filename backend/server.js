@@ -5,6 +5,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcrypt');
+const path = require('path');
+const { execFileSync } = require('child_process');
 const { initializeDatabase, isFallbackMode, getDatabaseError, query } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -57,16 +59,16 @@ app.use(
 );
 app.use(express.json({ limit: '1mb' }));
 
+// The ceiling is configurable so an acceptance run against a development
+// deployment is not throttled by the production limit. The default is
+// deliberately low and applies everywhere else.
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: Number(process.env.GENERAL_RATE_LIMIT_MAX || 300),
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// The ceiling is configurable so an acceptance run against a development
-// deployment is not throttled by the production limit. The default is
-// deliberately low and applies everywhere else.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.LOGIN_RATE_LIMIT_MAX || 25),
@@ -226,6 +228,48 @@ async function seedStaffAccounts() {
   }
 }
 
+/**
+ * Seeds the professional demonstration dataset the first time the service
+ * starts against an empty database.
+ *
+ * This is what makes a freshly provisioned live database immediately populated:
+ * once the user recreates the Aiven MySQL service and restarts the backend,
+ * the demo data (100 patients, appointments, consultations, prescriptions,
+ * pharmacy stock, laboratory results and staff accounts) is written on the
+ * first boot only, because the run is idempotent and guarded on the patients
+ * table being empty.
+ *
+ * It only runs when SEED_DEMO_DATA is set, so a real production installation
+ * with its own data is never touched.
+ */
+async function maybeSeedDemonstrationData() {
+  if (process.env.SEED_DEMO_DATA !== 'true') {
+    console.log('Demonstration data seeding disabled (set SEED_DEMO_DATA=true to seed a fresh database).');
+    return;
+  }
+
+  try {
+    const [rows] = await query('SELECT COUNT(*) AS total FROM patients');
+    if (Number(rows[0]?.total) > 0) {
+      console.log(`Existing patients found (${rows[0].total}); skipping demonstration seed.`);
+      return;
+    }
+  } catch (error) {
+    console.warn('Could not check the patients table before seeding; skipping demonstration seed.');
+    return;
+  }
+
+  console.log('Database has no patients; seeding the demonstration dataset...');
+  const seedScript = path.join(__dirname, 'scripts', 'seedDemonstrationData.js');
+
+  try {
+    execFileSync(process.execPath, [seedScript], { stdio: 'inherit' });
+    console.log('Demonstration data seeded.');
+  } catch (error) {
+    console.error('Demonstration seed failed:', error.message);
+  }
+}
+
 async function startServer() {
   const databaseReady = await initializeDatabase();
 
@@ -236,6 +280,7 @@ async function startServer() {
   }
 
   await seedStaffAccounts();
+  await maybeSeedDemonstrationData();
 
   app.listen(PORT, () => {
     console.log(`HealthBridge backend listening on port ${PORT}`);

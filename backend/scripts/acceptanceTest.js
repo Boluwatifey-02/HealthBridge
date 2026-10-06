@@ -93,7 +93,10 @@ async function api(path, { method = 'GET', token, body } = {}) {
   try {
     payload = await response.json();
   } catch (error) {
-    payload = null;
+    // A rejected request such as a rate limit arrives with an empty body, and
+    // returning a bare null would make the next assertion fail for the wrong
+    // reason. The status is reported so the real cause is visible.
+    payload = { message: `No JSON body (HTTP ${response.status}).` };
   }
 
   return { status: response.status, body: payload };
@@ -219,10 +222,31 @@ async function main() {
   check('the clinician list is returned', doctors.status === 200 && doctors.body.length > 0);
   const doctorId = doctors.body[0]?.id;
 
+  // This suite books a fixed slot so the assertions below can be exact. A run
+  // that exits early would otherwise leave that booking behind and the next run
+  // would be refused by the double-booking rule, so any earlier booking at the
+  // same slot is cancelled first.
+  const SLOT_DATE = '2030-01-15';
+  const SLOT_TIME = '09:30:00';
+
+  const existingOnDay = await api(`/appointments?format=envelope&from=${SLOT_DATE}&to=${SLOT_DATE}&pageSize=200`, {
+    token: adminToken,
+  });
+
+  if (existingOnDay.status === 200 && Array.isArray(existingOnDay.body.appointments)) {
+    for (const booking of existingOnDay.body.appointments) {
+      if (booking.doctorId !== doctorId) continue;
+      if (!String(booking.time || '').startsWith('09:30')) continue;
+      if (booking.status === 'Cancelled' || booking.status === 'Completed') continue;
+
+      await api(`/appointments/${booking.id}`, { method: 'DELETE', token: adminToken });
+    }
+  }
+
   const appt = await api('/appointments', {
     method: 'POST',
     token: adminToken,
-    body: { patientId, doctorId, date: '2030-01-15', time: '09:30', reason: 'Follow-up review' },
+    body: { patientId, doctorId, date: SLOT_DATE, time: '09:30', reason: 'Follow-up review' },
   });
   check('an appointment is booked', appt.status === 201 && appt.body.id, JSON.stringify(appt.body).slice(0, 200));
   check('the booked clinician is reported', appt.body.doctor === doctors.body[0]?.name, `${appt.body.doctor}`);

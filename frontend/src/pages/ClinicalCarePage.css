@@ -319,6 +319,89 @@
   }
 }
 
+/* The encounter history reuses the card treatment so the page keeps one look,
+   and the list is collapsed to a single column on a narrow screen. */
+.clinical-history {
+  margin-bottom: 26px;
+}
+
+.clinical-history-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clinical-history-item {
+  padding: 16px 18px;
+  border: 1px solid rgba(42, 38, 34, 0.08);
+  border-left: 3px solid var(--burgundy);
+  border-radius: 10px;
+  background: var(--soft-grey, #faf8f5);
+}
+
+.clinical-history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.clinical-history-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--burgundy);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.clinical-history-clinician {
+  color: var(--charcoal-soft);
+  font-size: 0.8rem;
+}
+
+.clinical-history-diagnosis {
+  margin: 0 0 8px;
+  color: var(--charcoal);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.clinical-history-detail {
+  margin: 0 0 6px;
+  color: var(--charcoal-soft);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.clinical-history-detail strong {
+  color: var(--charcoal);
+}
+
+.clinical-history-empty {
+  margin: 0;
+  color: var(--charcoal-soft);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.clinical-error-message button {
+  margin-left: 8px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (max-width: 560px) {
   .clinical-header-inner,
   .clinical-container {

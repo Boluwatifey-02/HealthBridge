@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ArrowLeft,
   UserRound,
@@ -12,12 +12,39 @@ import {
 } from 'lucide-react';
 import Brand from '../components/Brand';
 import api from '../services/api';
+import { useApiData } from '../hooks/useApiData';
 import './ClinicalCarePage.css';
+
+function formatEncounterDate(value) {
+  if (!value) return 'Date not recorded';
+
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime())
+    ? 'Date not recorded'
+    : parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 function ClinicalCarePage({ patient, onBack, onConsultationSaved }) {
   const [saved, setSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  // Bumped after a save so the history below the form reloads and the record just
+  // written is visible without a page refresh.
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const loadHistory = useCallback(async () => {
+    const response = await api.getConsultations({ patientId: patient.id, pageSize: 25 });
+
+    return response.consultations || [];
+  }, [patient.id]);
+
+  const {
+    data: history,
+    loading: historyLoading,
+    error: historyError,
+    refresh: refreshHistory,
+  } = useApiData(loadHistory, [patient.id, reloadToken], { enabled: Boolean(patient.id) });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -77,6 +104,7 @@ function ClinicalCarePage({ patient, onBack, onConsultationSaved }) {
       }
 
       setSaved(true);
+      setReloadToken((current) => current + 1);
     } catch (error) {
       console.error('Unable to save consultation via backend:', error);
       setSaved(false);
@@ -139,6 +167,86 @@ function ClinicalCarePage({ patient, onBack, onConsultationSaved }) {
               <strong>{patient.condition}</strong>
             </div>
           </section>
+        )}
+
+        {/* The patient's existing record is shown above the form, so a clinician
+            opening a patient sees their history rather than a blank page. */}
+        <section className="clinical-card clinical-history">
+          <div className="clinical-card-heading">
+            <div className="clinical-card-icon">
+              <FileText size={19} />
+            </div>
+            <div>
+              <h2>Recorded encounters</h2>
+              <p>
+                {historyLoading
+                  ? 'Loading the clinical record...'
+                  : `${history?.length || 0} consultation${history?.length === 1 ? '' : 's'} on file`}
+              </p>
+            </div>
+          </div>
+
+          {historyError && (
+            <div className="clinical-error-message">
+              The clinical record could not be loaded: {historyError}{' '}
+              <button type="button" onClick={refreshHistory}>
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!historyLoading && !historyError && patient && (
+            <>
+              {history?.length ? (
+                <ul className="clinical-history-list">
+                  {history.map((entry) => (
+                    <li key={entry.id} className="clinical-history-item">
+                      <div className="clinical-history-head">
+                        <span className="clinical-history-date">
+                          <CalendarDays size={14} />
+                          {formatEncounterDate(entry.date || entry.consultationDate)}
+                        </span>
+                        <span className="clinical-history-clinician">
+                          {entry.doctor || entry.doctorName || 'Clinician not recorded'}
+                        </span>
+                      </div>
+
+                      <p className="clinical-history-diagnosis">{entry.diagnosis}</p>
+
+                      {entry.complaint && (
+                        <p className="clinical-history-detail">
+                          <strong>Presenting complaint:</strong> {entry.complaint}
+                        </p>
+                      )}
+
+                      {entry.treatment && (
+                        <p className="clinical-history-detail">
+                          <strong>Treatment:</strong> {entry.treatment}
+                        </p>
+                      )}
+
+                      {entry.followUp && (
+                        <p className="clinical-history-detail">
+                          <strong>Follow-up:</strong> {entry.followUp}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="clinical-history-empty">
+                  No consultation has been recorded for this patient yet. The first
+                  one can be entered below.
+                </p>
+              )}
+            </>
+          )}
+        </section>
+
+        {!patient && (
+          <div className="clinical-error-message">
+            Select a patient from Patient Records to review or add a consultation.
+          </div>
         )}
 
         <form className="clinical-form" onSubmit={handleSubmit}>

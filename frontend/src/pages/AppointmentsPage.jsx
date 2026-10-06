@@ -51,6 +51,10 @@ const normalizeAppointment = (appointment = {}) => ({
 function AppointmentsPage({ onLogout }) {
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
+  // Counts for the whole schedule rather than the page on screen. The cards at
+  // the top of this page say "Today's appointments", so counting only the rows
+  // that happen to be loaded would report the page size rather than the day.
+  const [overview, setOverview] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,9 +70,12 @@ function AppointmentsPage({ onLogout }) {
         setIsLoading(true);
         setError('');
 
-        const [appointmentData, patientData] = await Promise.all([
+        const [appointmentData, patientData, summary] = await Promise.all([
           api.getAppointments(),
           api.getPatients(),
+          // The dashboard computes these across every appointment, which is what
+          // the overview cards claim to show.
+          api.getDashboardSummary().catch(() => null),
         ]);
 
         // The list endpoints return an envelope with the rows and the total, so
@@ -77,6 +84,7 @@ function AppointmentsPage({ onLogout }) {
           (appointmentData?.appointments || []).map(normalizeAppointment)
         );
         setPatients(patientData?.patients || []);
+        setOverview(summary);
       } catch (loadError) {
         console.error('Unable to fetch appointments:', loadError);
         setError(loadError.message || 'Unable to load appointments from the backend.');
@@ -363,7 +371,12 @@ function AppointmentsPage({ onLogout }) {
 
           {notice && <div className="appointment-form-success">{notice}</div>}
 
-          <section className="appointments-overview">
+{/* These counts come from the dashboard, which aggregates the whole
+              schedule. Counting the rows loaded on this page would report the
+              page size instead of the day, and the cards are labelled as
+              clinic-wide figures. If the dashboard cannot be reached the loaded
+              rows are used and labelled as such rather than quietly swapped. */}
+        <section className="appointments-overview">
           <div className="appointments-overview-card">
             <div className="appointments-overview-icon">
               <CalendarDays size={20} />
@@ -371,7 +384,9 @@ function AppointmentsPage({ onLogout }) {
 
             <div>
               <span>Today's appointments</span>
-              <strong>{appointments.length}</strong>
+              <strong>
+                {overview?.today?.appointmentsToday ?? appointments.length}
+              </strong>
             </div>
           </div>
 
@@ -382,7 +397,10 @@ function AppointmentsPage({ onLogout }) {
 
             <div>
               <span>Confirmed</span>
-              <strong>{appointments.filter((appointment) => appointment.status === 'Confirmed').length}</strong>
+              <strong>
+                {overview?.breakdown?.appointments?.Confirmed ??
+                  appointments.filter((appointment) => appointment.status === 'Confirmed').length}
+              </strong>
             </div>
           </div>
 
@@ -392,8 +410,15 @@ function AppointmentsPage({ onLogout }) {
             </div>
 
             <div>
-              <span>Pending</span>
-              <strong>{appointments.filter((appointment) => appointment.status === 'Pending' || appointment.status === 'Scheduled').length}</strong>
+              <span>Awaiting confirmation</span>
+              <strong>
+                {(overview?.breakdown?.appointments?.Pending ?? 0) +
+                  (overview?.breakdown?.appointments?.Scheduled ?? 0) ||
+                  appointments.filter(
+                    (appointment) =>
+                      appointment.status === 'Pending' || appointment.status === 'Scheduled'
+                  ).length}
+              </strong>
             </div>
           </div>
         </section>

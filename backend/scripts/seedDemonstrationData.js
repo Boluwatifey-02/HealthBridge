@@ -341,45 +341,69 @@ const MEDICINE_CATALOGUE = [
   { name: 'Praziquantel 600mg', generic: 'Praziquantel', dosage: '600mg', unit: 'tablets', stock: 120, reorder: 60 },
 ];
 
-const PATIENT_TEMPLATE = [
-  { gender: 'Female', blood: 'O+', genotype: 'AA', occupation: 'Teacher' },
-  { gender: 'Male', blood: 'A+', genotype: 'AS', occupation: 'Trader' },
-  { gender: 'Female', blood: 'B+', genotype: 'AA', occupation: 'Nurse' },
-  { gender: 'Male', blood: 'O+', genotype: 'AA', occupation: 'Driver' },
-  { gender: 'Female', blood: 'A+', genotype: 'AA', occupation: 'Accountant' },
-  { gender: 'Female', blood: 'O-', genotype: 'AS', occupation: 'Shop Owner' },
-  { gender: 'Male', blood: 'B+', genotype: 'AA', occupation: 'Engineer' },
-  { gender: 'Female', blood: 'AB+', genotype: 'AA', occupation: 'Tailor' },
-  { gender: 'Male', blood: 'A-', genotype: 'AS', occupation: 'Farmer' },
-  { gender: 'Female', blood: 'O+', genotype: 'AA', occupation: 'Civil Servant' },
+// The demonstration roster. One hundred patients is enough for the lists to
+// page, search and aggregate meaningfully without taking the seed unreasonably
+// long to run.
+const PATIENT_COUNT = 100;
+
+// Portal access is given to the first few so the patient sign-in and own-record
+// journey can be demonstrated without creating a hundred mailboxes.
+const PATIENTS_WITH_PORTAL_ACCESS = 12;
+
+const BLOOD_GROUPS = ['O+', 'O+', 'A+', 'A+', 'B+', 'B+', 'AB+', 'O-', 'A-', 'B-'];
+const GENOTYPES = ['AA', 'AA', 'AA', 'AS', 'AS', 'SS'];
+const OCCUPATIONS = [
+  'Teacher', 'Trader', 'Nurse', 'Driver', 'Accountant', 'Shop Owner', 'Engineer',
+  'Tailor', 'Farmer', 'Civil Servant', 'Student', 'Student', 'Hairdresser',
+  'Electrician', 'Banker', 'Chef', 'Seamstress', 'Mechanic', 'Pharmacist Assistant',
+  'Community Health Worker',
 ];
 
 const SURNAMES = [
   'Adeyemi', 'Balogun', 'Chukwu', 'Danjuma', 'Eze', 'Fashola', 'Gbadamosi', 'Hassan',
   'Ibrahim', 'Jideofor', 'Kalu', 'Lawal', 'Mohammed', 'Nwachukwu', 'Ogundipe', 'Okafor',
   'Oluwaseun', 'Onyeka', 'Sanni', 'Tunde', 'Uche', 'Yusuf', 'Zamani', 'Adesanya',
+  'Akinwale', 'Bello', 'Chukwuemeka', 'Danjuma', 'Emenike', 'Gbenga', 'Iheanacho',
+  'Jimoh', 'Kalu', 'Linus', 'Mustapha', 'Nkemdilim', 'Ogbonna', 'Promise', 'Rasheed',
+  'Sadiq', 'Tajudeen', 'Uzoma', 'Wole', 'Yinka', 'Zainab', 'Abiola', 'Chidozie',
+  'Ebere', 'Femi', 'Gifty', 'Halima', 'Ibrahim', 'Kehinde', 'Lateef', 'Mofe',
 ];
 
 const FIRST_NAMES = [
   'Amaka', 'Bola', 'Chidi', 'Damilola', 'Eniola', 'Folake', 'Ganiyu', 'Halima',
   'Ifeoma', 'Jide', 'Kemi', 'Lamin', 'Morenike', 'Nneka', 'Olumide', 'Precious',
   'Rukayat', 'Segun', 'Temitope', 'Ugochi', 'Wale', 'Yewande', 'Zainab', 'Bukola',
+  'Chinaza', 'Damilare', 'Emeka', 'Fatima', 'Godwin', 'Hauwa', 'Ibrahim', 'Joke',
+  'Kelechi', 'Loveth', 'Monday', 'Nkechi', 'Oluwaseun', 'Peace', 'Rachel', 'Sunday',
+  'Tosin', 'Uzoma', 'Victoria', 'Wisdom', 'Yemi', 'Zaria', 'Ayodeji', 'Bisi',
+  'Chinedu', 'Dada', 'Esther', 'Folarin', 'Grace', 'Hakeem', 'Iretioluwa', 'Jideofor',
 ];
 
+// Adults carry the working occupations; children are recorded as students.
 const LAGOS_AREAS = [
   'Ikeja', 'Yaba', 'Surulere', 'Alausa', 'Ojota', 'Ikorodu', 'Festac Town', 'Agege',
-  'Apapa', ' Mushin', 'Shitta', 'Mile 2', 'Oshodi', 'Egbeda', 'Ibadan Road',
+  'Apapa', 'Mushin', 'Shitta', 'Mile 2', 'Oshodi', 'Egbeda', 'Ibadan Road',
+  'Ketu', 'Maryland', 'Isale Eko', 'Igbatti', 'Bariga', 'Ajegunle', 'Ilasa',
+  'Onike', 'Satellite Town',
 ];
 
 const STREETS = [
   'Ogunmola Way', 'Allen Avenue', 'Adekunle Fajuyi Road', 'Ikorodu Road', 'Herbert Macaulay Way',
   'Awolowo Avenue', 'Murtala Muhammed Way', 'Obafemi Awolowo Way', 'Sim Macaulay Road',
-  'Abaoye Street',
+  'Abaoye Street', 'Bode Thomas Street', 'Ibiyinka Oluwole Way', 'Akinremi Street',
 ];
 
 const ALLERGY_OPTIONS = [
-  'None known', 'None known', 'None known', 'Penicillin', 'Sulpha drugs', 'Aspirin',
-  'Latex', 'Shellfish', 'Dust mite',
+  'None known', 'None known', 'None known', 'None known', 'Penicillin', 'Sulpha drugs',
+  'Aspirin', 'Latex', 'Shellfish', 'Dust mite',
+];
+
+const OCCASION_NOTES = [
+  'Seen during a clinic session. Advised to return if symptoms worsen.',
+  'Brought by a family member. History taken from the accompanying relative.',
+  'Self-presented. Denies fever, but reports intermittent symptoms at night.',
+  'Attended for a routine check. No new complaints recorded today.',
+  'Presenting for follow-up on an existing treatment plan.',
 ];
 
 async function connect() {
@@ -458,21 +482,19 @@ async function main() {
     const [rows] = await connection.query('SELECT id, full_name, email, role FROM staff WHERE email = ?', [member.email]);
     if (rows.length === 0) throw new Error(`Staff account ${member.email} was not stored.`);
 
-    // An account that already existed before this script keeps whatever
-    // password it had, so a real deployment's credentials are never silently
-    // overwritten. Only rows this script actually created are given the
-    // documented demonstration password, and only those are listed as usable.
-    const createdHere = rows[0].id === member.id;
-    if (createdHere) {
-      await connection.query('UPDATE staff SET password_hash = ? WHERE id = ?', [passwordHash, rows[0].id]);
-    }
+    // This is the demonstration seeder, so every account it owns uses the
+    // documented demonstration password. The seed is gated behind
+    // SEED_DEMO_DATA=true, so it never runs against a live installation with
+    // its own credentials - in production the accounts are created by the
+    // backend's own staff seeder with generated passwords instead.
+    await connection.query('UPDATE staff SET password_hash = ? WHERE id = ?', [passwordHash, rows[0].id]);
 
     staff.push({
       ...member,
       id: rows[0].id,
       fullName: rows[0].full_name,
       role: rows[0].role,
-      demoPassword: createdHere ? DEMO_PASSWORD : null,
+      demoPassword: DEMO_PASSWORD,
     });
   }
   console.log(`Staff ready (${staff.length} accounts, ${staff.filter((s) => s.demoPassword).length} new).`);
@@ -493,42 +515,54 @@ async function main() {
 
   // ------------------------------------------------------------ patients
   const patients = [];
-  for (let i = 0; i < PATIENT_TEMPLATE.length; i += 1) {
-    const template = PATIENT_TEMPLATE[i];
+  for (let i = 0; i < PATIENT_COUNT; i += 1) {
     const clinical = CLINICAL_CASES[i % CLINICAL_CASES.length];
-    const surname = SURNAMES[i % SURNAMES.length];
-    const firstName = FIRST_NAMES[i % FIRST_NAMES.length];
+    // Names are drawn from pools larger than the roster and the index is
+    // advanced independently, so records are not simply the same person repeated
+    // with a different number.
+    const surname = SURNAMES[(i * 7 + Math.floor(i / FIRST_NAMES.length)) % SURNAMES.length];
+    const firstName = FIRST_NAMES[(i * 5 + Math.floor(i / SURNAMES.length)) % FIRST_NAMES.length];
+    const secondName = i % 3 === 0 ? FIRST_NAMES[(i * 11 + 7) % FIRST_NAMES.length] : null;
     const id = `HB-PAT-${String(i + 1).padStart(3, '0')}`;
+    const index = i;
     const area = LAGOS_AREAS[i % LAGOS_AREAS.length];
-    const street = STREETS[i % STREETS.length];
-    const age = 4 + Math.floor(random() * 62);
-    const lastVisitOffset = -Math.floor(random() * 70);
+    const street = STREETS[(i * 3) % STREETS.length];
 
-    patients.push({
+    // A spread of ages, including children and older adults, because a primary
+    // health centre sees all of them.
+    const age = 2 + Math.floor(random() * 76);
+    const isChild = age < 16;
+    const gender = random() > 0.52 ? 'Female' : 'Male';
+    const lastVisitOffset = -Math.floor(random() * 90);
+
+patients.push({
       id,
-      fullName: `Demo ${firstName} ${surname}`,
+      index,
+      fullName: `Demo ${firstName}${secondName ? ` ${secondName}` : ''} ${surname}`,
       surname,
       age,
-      gender: template.gender,
+      gender,
       phone: `+234 80${String(10000000 + i * 137711).slice(0, 8)}`,
-      email: `demo.patient${i + 1}@healthbridge.ng`,
+      email: i < PATIENTS_WITH_PORTAL_ACCESS ? `demo.patient${i + 1}@healthbridge.ng` : null,
       area,
       street,
-      blood: template.blood,
-      genotype: template.genotype,
-      occupation: age < 18 ? 'Student' : template.occupation,
-      allergies: ALLERGY_OPTIONS[i % ALLERGY_OPTIONS.length],
+      blood: BLOOD_GROUPS[(i * 3 + 1) % BLOOD_GROUPS.length],
+      genotype: GENOTYPES[(i * 5) % GENOTYPES.length],
+      occupation: isChild ? 'Student' : OCCUPATIONS[(i * 7) % OCCUPATIONS.length],
+      allergies: ALLERGY_OPTIONS[(i * 3) % ALLERGY_OPTIONS.length],
       condition: clinical.condition,
       lastVisit: dateOnly(lastVisitOffset),
+      occasion: OCCASION_NOTES[i % OCCASION_NOTES.length],
       clinical,
-      hasAccount: i < 3,
+      hasAccount: i < PATIENTS_WITH_PORTAL_ACCESS,
     });
   }
 
   for (const patient of patients) {
     const history = [
-      `${patient.condition} since ${2020 + Math.floor(random() * 5)}.`,
+      `${patient.condition} since ${2015 + Math.floor(random() * 9)}.`,
       `Blood group ${patient.blood}, genotype ${patient.genotype}.`,
+      patient.allergies !== 'None known' ? `Reported allergy: ${patient.allergies.toLowerCase()}.` : 'No known allergies.',
       'No previous surgery recorded.',
     ].join(' ');
 
@@ -549,12 +583,12 @@ async function main() {
         patient.id, patient.fullName, patient.age, patient.gender, patient.phone,
         patient.hasAccount ? patient.email : null,
         patient.hasAccount ? passwordHash : null,
-        `${Math.floor(random() * 90) + 1} ${patient.street}, ${patient.area}, Lagos`,
+        `${10 + ((patient.index * 90) % 89)} ${patient.street}, ${patient.area}, Lagos`,
         patient.occupation,
-        `${pick(FIRST_NAMES)} ${patient.surname} - +234 80${String(20000000 + patients.indexOf(patient) * 91117).slice(0, 8)}`,
+        `${FIRST_NAMES[(patient.index * 3 + 2) % FIRST_NAMES.length]} ${patient.surname} - +234 80${String(20000000 + patient.index * 91117).slice(0, 8)}`,
         patient.blood, patient.genotype, patient.allergies, patient.condition, history,
-        'Demonstration record created by the HealthBridge seed script.',
-         patient.lastVisit,
+        `${patient.occasion} Demonstration record created by the HealthBridge seed script.`,
+        patient.lastVisit,
       ]
     );
 
@@ -573,20 +607,37 @@ async function main() {
   }
   console.log(`Patients ready (${patients.length}, ${patients.filter((p) => p.portalAccess).length} with portal access).`);
 
-  // -------------------------------------------------------- appointments
+// -------------------------------------------------------- appointments
   const doctors = staff.filter((s) => s.role === 'Doctor');
-  const statuses = ['Scheduled', 'Confirmed', 'Completed', 'Pending', 'Cancelled'];
   let appointmentCount = 0;
 
   for (const patient of patients) {
-    for (let n = 0; n < 2; n += 1) {
+    // Between one and three appointments each. One of them lands today for the
+    // first stretch of the roster, so "Appointments today" is a real figure
+    // rather than a zero that happens to be true only because nothing was
+    // booked, and the last fortnight has enough rows to draw a chart from.
+    const total = 1 + (patient.index % 3);
+
+    for (let n = 0; n < total; n += 1) {
       const id = `HB-APT-${patient.id.slice(-3)}-${n + 1}`;
-      // upcoming appointments for the first handful, past ones for the rest
-      const offset = n === 0 ? (patient.id.charCodeAt(8) % 9) - 3 : -Math.floor(random() * 40) - 5;
       const doctor = pick(doctors);
-      const status = offset > 0 ? pick(['Scheduled', 'Confirmed', 'Scheduled']) : pick(['Completed', 'Completed', statuses[Math.floor(random() * statuses.length)]]);
-      const hour = 8 + Math.floor(random() * 9);
-      const minute = random() > 0.5 ? '30' : '00';
+
+      let offset;
+      if (n === 0 && patient.index < 25) {
+        offset = 0; // today's clinic list
+      } else if (n === 0) {
+        offset = 1 + (patient.index % 10); // coming up
+      } else {
+        offset = -(1 + (patient.index % 13) + n * 5); // recent history
+      }
+
+      const status =
+        offset > 0
+          ? pick(['Scheduled', 'Confirmed', 'Scheduled', 'Pending'])
+          : pick(['Completed', 'Completed', 'Completed', 'Cancelled']);
+
+      const hour = 8 + ((patient.index + n * 2) % 9);
+      const minute = (patient.index + n) % 2 === 0 ? '00' : '30';
       const when = daysFromNow(offset);
       when.setHours(hour, Number(minute), 0, 0);
 
@@ -609,34 +660,50 @@ async function main() {
   }
   console.log(`Appointments ready (${appointmentCount}).`);
 
-  // ------------------------------------------------------- consultations
+// ------------------------------------------------------- consultations
   let consultationCount = 0;
   const consultationIndex = new Map();
 
   for (const patient of patients) {
-    const doctor = pick(doctors);
-    const id = `HB-CONS-${patient.id.slice(-3)}`;
-    const when = daysFromNow(-Math.floor(random() * 55) - 2);
-    when.setHours(9 + Math.floor(random() * 7), Math.floor(random() * 6) * 10, 0, 0);
+    // Two consultations for a third of the roster, so follow-up visits exist
+    // alongside first assessments and the patient timeline is not a single row.
+    const encounters = patient.index % 3 === 0 ? 2 : 1;
 
-    await connection.query(
-      `INSERT INTO consultations
-        (id, patient_id, doctor_id, consultation_date, complaint, diagnosis, treatment, notes, follow_up)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE consultation_date = VALUES(consultation_date),
-         complaint = VALUES(complaint), diagnosis = VALUES(diagnosis),
-         treatment = VALUES(treatment), follow_up = VALUES(follow_up), notes = VALUES(notes)`,
-      [
-        id, patient.id, doctor.id, when,
-        patient.clinical.complaint,
-        patient.clinical.diagnosis,
-        patient.clinical.treatment,
-        'Examination findings and counselling documented. Patient verbalised understanding and was given a written summary.',
-        patient.clinical.followUp,
-      ]
-    );
-    consultationIndex.set(patient.id, { id, doctorId: doctor.id, when });
-    consultationCount += 1;
+    for (let n = 0; n < encounters; n += 1) {
+      const doctor = pick(doctors);
+      const id = encounters === 1
+        ? `HB-CONS-${patient.id.slice(-3)}`
+        : `HB-CONS-${patient.id.slice(-3)}-${n + 1}`;
+
+      // Kept inside the last three months so every record falls inside the
+      // period the dashboard reports on.
+      const when = daysFromNow(-(2 + ((patient.index * 3 + n * 21) % 85)));
+      when.setHours(9 + ((patient.index + n) % 7), (patient.index * 10 + n * 15) % 60, 0, 0);
+
+      await connection.query(
+        `INSERT INTO consultations
+          (id, patient_id, doctor_id, consultation_date, complaint, diagnosis, treatment, notes, follow_up)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE consultation_date = VALUES(consultation_date),
+           complaint = VALUES(complaint), diagnosis = VALUES(diagnosis),
+           treatment = VALUES(treatment), follow_up = VALUES(follow_up), notes = VALUES(notes)`,
+        [
+          id, patient.id, doctor.id, when,
+          n === 0 ? patient.clinical.complaint : `Follow-up visit. ${patient.clinical.complaint}`,
+          patient.clinical.diagnosis,
+          patient.clinical.treatment,
+          `${patient.occasion} Examination findings and counselling documented. Patient verbalised understanding and was given a written summary.`,
+          patient.clinical.followUp,
+        ]
+      );
+
+      // Prescriptions hang off the most recent encounter for each patient.
+      consultationIndex.set(
+        patient.id,
+        n === encounters - 1 ? { id, doctorId: doctor.id, when } : consultationIndex.get(patient.id) || { id, doctorId: doctor.id, when }
+      );
+      consultationCount += 1;
+    }
   }
   console.log(`Consultations ready (${consultationCount}).`);
 
@@ -724,7 +791,7 @@ async function main() {
   console.log(`Laboratory requests ready (${labRequestCount}, ${labResultCount} results recorded).`);
 
   // ------------------------------------------------------ patient documents
-  for (const patient of patients.slice(0, 8)) {
+  for (const patient of patients.slice(0, 40)) {
     await connection.query(
       `INSERT INTO patient_documents (id, patient_id, document_type, file_name, uploaded_at)
        VALUES (?, ?, ?, ?, ?)
@@ -738,9 +805,9 @@ async function main() {
       ]
     );
   }
-  console.log('Patient documents ready (8).');
+  console.log('Patient documents ready (40).');
 
-  // ------------------------------------------------------------- audit log
+// ------------------------------------------------------------- audit log
   const actions = [
     ['LOGIN', 'Signed in to the HealthBridge workspace'],
     ['VIEW_PATIENT_RECORD', 'Viewed a patient record'],
@@ -751,11 +818,13 @@ async function main() {
     ['DISPENSE_DRUG', 'Dispensed a prescribed medicine'],
   ];
   let auditCount = 0;
-  for (let i = 0; i < 30; i += 1) {
+  // Enough entries to fill the activity feed, spread across the last fortnight so
+  // the dashboard's recent-activity panel shows genuine recent work.
+  for (let i = 0; i < 80; i += 1) {
     const [action, description] = actions[i % actions.length];
     const actor = pick(staff);
-    const when = daysFromNow(-Math.floor(random() * 14));
-    when.setHours(7 + Math.floor(random() * 12), Math.floor(random() * 60), 0, 0);
+    const when = daysFromNow(-Math.floor((i * 5) % 14));
+    when.setHours(7 + ((i * 3) % 12), (i * 7) % 60, 0, 0);
     const id = `HB-AUD-${String(i + 1).padStart(4, '0')}`;
 
     await connection.query(

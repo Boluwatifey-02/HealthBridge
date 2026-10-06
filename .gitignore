@@ -42,3 +42,7 @@ Thumbs.db
 # Local database dumps / caches
 *.sqlite
 *.sql.*
+
+# Verification screenshots and local run logs
+deploy/shots/
+*.out

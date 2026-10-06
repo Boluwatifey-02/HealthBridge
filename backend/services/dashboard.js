@@ -187,9 +187,13 @@ async function getDashboardMetrics() {
     };
   }
 
+  // The appointment total is the count of every appointment ever booked, not
+  // only today's, so it is read separately from the attendance figures below.
+  const [appointmentTotalRows] = await query('SELECT COUNT(*) AS total FROM appointments');
+
   const [totalPatientsCount, appointmentCount, lowStockCount, pendingLabCount] = await Promise.all([
     totalPatients(),
-    count(await query('SELECT COUNT(*) AS total FROM appointments')),
+    count(appointmentTotalRows),
     lowStockMedicines(),
     pendingLabRequests(),
   ]);
