@@ -1,11 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install",
+  "installCommand": "npm install --ignore-scripts",
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
   "build": {
     "env": {
-      "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+      "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
+      "VITE_BUILD_CACHE_BUST": "1"
     }
   }
 }
