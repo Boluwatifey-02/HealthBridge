@@ -10,7 +10,7 @@ import './LoginPage.css';
  * session is separate from a staff session and is rejected by every staff route,
  * so a patient can see their own record and nothing else.
  */
-function PatientLoginPage({ onLogin, onForgotPassword, error }) {
+function PatientLoginPage({ onLogin, onForgotPassword, onRegisterClick, error }) {
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -82,9 +82,12 @@ function PatientLoginPage({ onLogin, onForgotPassword, error }) {
             Forgotten your password?
           </button>
 
+          <button type="button" className="login-submit" onClick={onRegisterClick} style={{ marginTop: '0.5rem', background: 'transparent', color: 'var(--burgundy)', border: '1px solid var(--burgundy)' }}>
+            Create an account
+          </button>
+
           <p className="login-note">
-            No portal access yet? Ask the clinic to add your email address to
-            your record, then set a password from the sign-in page.
+            No portal access yet? Register to create your account.
           </p>
         </section>
       </main>

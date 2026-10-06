@@ -3,7 +3,7 @@ import { Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react';
 import Brand from '../components/Brand';
 import './LoginPage.css';
 
-function LoginPage({ onLogin, onForgotPassword, error }) {
+function LoginPage({ onLogin, onPatientLoginClick, onForgotPassword, error }) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,6 +93,13 @@ function LoginPage({ onLogin, onForgotPassword, error }) {
             Sign in
             <ArrowRight size={17} />
           </button>
+
+          <div className="login-patient-link">
+            <span>Patient?</span>
+            <button type="button" onClick={onPatientLoginClick}>
+              Open the patient portal
+            </button>
+          </div>
 
         </form>
 

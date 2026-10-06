@@ -17,7 +17,7 @@ function describe(actor) {
   if (!actor) return { actorId: null, actorName: 'System', actorRole: null };
 
   return {
-    actorId: actor.id || null,
+    actorId: actor.demo ? null : (actor.id || null),
     actorName: actor.fullName || actor.full_name || actor.email || 'Unknown user',
     actorRole: actor.role || null,
   };

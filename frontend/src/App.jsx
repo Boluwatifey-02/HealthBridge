@@ -14,6 +14,7 @@ import AIInsightsPage from './pages/AIInsightsPage';
 import SecurityPage from './pages/SecurityPage';
 import PatientLoginPage from './pages/PatientLoginPage';
 import PatientPortalPage from './pages/PatientPortalPage';
+import PatientSelfRegistrationPage from './pages/PatientSelfRegistrationPage';
 import api, { UNAUTHORIZED_EVENT_NAME } from './services/api';
 
 const ROUTES = {
@@ -33,6 +34,7 @@ const ROUTES = {
   '/patient-portal': 'patient-login',
   '/patient-reset-password': 'patient-reset-password',
   '/patient-forgot-password': 'patient-forgot-password',
+  '/patient-register': 'patient-register',
   '/my-record': 'patient-portal',
 };
 
@@ -227,11 +229,7 @@ function App() {
     }
   };
 
-  const handleLogout = useCallback(() => {
-    api.clearToken();
-    setPatients([]);
-    setSelectedPatient(null);
-    setStaffUser(null);
+  const openLogin = useCallback(() => {
     setAuthError('');
     navigate('login');
   }, [navigate]);
@@ -261,16 +259,21 @@ function App() {
     }
   };
 
+  const handleLogout = useCallback(() => {
+    api.clearToken();
+    setPatients([]);
+    setSelectedPatient(null);
+    setStaffUser(null);
+    setAuthError('');
+    navigate('login');
+  }, [navigate]);
+
   const openAppointments = useCallback(() => navigate('appointments'), [navigate]);
   const openDashboard = useCallback(() => navigate('dashboard'), [navigate]);
   const openLaboratory = useCallback(() => navigate('laboratory'), [navigate]);
   const openAIInsights = useCallback(() => navigate('ai-insights'), [navigate]);
   const openPharmacy = useCallback(() => navigate('pharmacy'), [navigate]);
   const openSecurity = useCallback(() => navigate('security'), [navigate]);
-  const openLogin = useCallback(() => {
-    setAuthError('');
-    navigate('login');
-  }, [navigate]);
 
   const openForgotPassword = useCallback(() => {
     setAuthError('');
@@ -299,7 +302,24 @@ function App() {
       <PatientLoginPage
         onLogin={handlePatientLogin}
         onForgotPassword={() => navigate('patient-forgot-password')}
+        onRegisterClick={() => navigate('patient-register')}
         error={patientAuthError}
+      />
+    );
+  }
+
+  if (page === 'patient-register') {
+    return (
+      <PatientSelfRegistrationPage
+        onBack={() => navigate('patient-login')}
+        onRegistered={(response) => {
+          if (response?.token) {
+            api.setPatientToken(response.token);
+            navigate('patient-portal');
+          } else {
+            navigate('patient-login');
+          }
+        }}
       />
     );
   }
@@ -339,7 +359,7 @@ function App() {
   }
 
   if (page === 'login') {
-    return <LoginPage onLogin={handleLogin} onForgotPassword={openForgotPassword} error={authError} />;
+    return <LoginPage onLogin={handleLogin} onPatientLoginClick={() => navigate('patient-login')} onForgotPassword={openForgotPassword} error={authError} />;
   }
 
   // These two pages must stay reachable whether or not a session exists.
@@ -360,7 +380,7 @@ function App() {
   // A patient session must not open the staff workspace, and a missing staff
   // session must not leave a blank screen.
   if (STAFF_ONLY_PAGES.has(page) && !isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} onForgotPassword={openForgotPassword} error={authError} />;
+    return <LoginPage onLogin={handleLogin} onPatientLoginClick={() => navigate('patient-login')} onForgotPassword={openForgotPassword} error={authError} />;
   }
 
   if (page === 'dashboard') {

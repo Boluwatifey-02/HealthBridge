@@ -149,6 +149,7 @@ export const api = {
 
   // -------------------------------------------------------- patient auth
   patientLogin: (payload) => post('/patient-auth/login', payload, 'patient'),
+  patientRegister: (payload) => post('/patient-auth/register', payload, 'patient'),
   patientSetPassword: (payload) => post('/patient-auth/set-password', payload),
   patientForgotPassword: (email) => post('/patient-auth/forgot-password', { email }, 'patient'),
   verifyPatientResetToken: (token) =>

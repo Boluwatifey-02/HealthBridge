@@ -13,6 +13,86 @@ const router = express.Router();
 const BCRYPT_ROUNDS = 10;
 const PATIENT_TOKEN_TTL = '30m';
 
+router.post(
+  '/register',
+  asyncHandler(async (req, res) => {
+    if (isFallbackMode()) {
+      throw new ApiError(503, DATABASE_UNAVAILABLE_MESSAGE);
+    }
+
+    const body = req.body || {};
+    const fullName = v.text(body.fullName || body.name, 'Full name', { required: true, max: 120 });
+    const email = v.email(body.email, 'Email address', { required: true });
+    const password = v.password(body.password);
+    const confirmPassword = String(body.confirmPassword || '');
+
+    if (password !== confirmPassword) {
+      throw ApiError.badRequest('The two passwords do not match.');
+    }
+
+    const age = v.integer(body.age, 'Age', { min: 0, max: 130, fallback: null });
+    const gender = v.text(body.gender, 'Gender', { max: 20, fallback: '' });
+    const phone = v.phone(body.phone, 'Phone number');
+    const address = v.text(body.address, 'Address', { max: 255, fallback: '' });
+    const bloodGroup = v.text(body.bloodGroup, 'Blood group', { max: 10, fallback: '' });
+    const genotype = v.text(body.genotype, 'Genotype', { max: 10, fallback: '' });
+    const allergies = v.text(body.allergies, 'Allergies', { max: 255, fallback: 'None known' });
+    const condition = v.text(body.condition, 'Condition', { max: 255, fallback: 'Not recorded' });
+    const occupation = v.text(body.occupation, 'Occupation', { max: 120, fallback: '' });
+    const emergencyContact = v.text(body.emergencyContact, 'Emergency contact', { max: 80, fallback: '' });
+    const nationalId = v.text(body.nationalId, 'National ID', { max: 40, fallback: '' });
+    const medicalHistory = v.longText(body.medicalHistory, 'Medical history');
+
+    const [existing] = await query('SELECT id FROM patients WHERE email = ? LIMIT 1', [email]);
+    if (existing.length) {
+      throw ApiError.conflict('An account already exists for this email address.');
+    }
+
+    const id = `PAT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    await query(
+      `INSERT INTO patients
+        (id, full_name, age, gender, phone, email, password_hash, address, occupation,
+         emergency_contact, blood_group, genotype, allergies, \`condition\`, medical_history,
+         status, last_visit, branch_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', CURDATE(), 1)`,
+      [
+        id, fullName, age, gender, phone, email, passwordHash, address, occupation,
+        emergencyContact, bloodGroup, genotype, allergies, condition, medicalHistory,
+      ]
+    );
+
+    await recordAudit(
+      { id: null, fullName, role: 'Patient' },
+      'PATIENT_REGISTER',
+      'Created a new patient portal account.'
+    );
+
+    const token = jwt.sign(
+      {
+        id,
+        fullName,
+        email,
+        audience: 'patient',
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: PATIENT_TOKEN_TTL }
+    );
+
+    return res.status(201).json({
+      message: 'Account created successfully.',
+      token,
+      user: {
+        id,
+        fullName,
+        email,
+        role: 'Patient',
+      },
+    });
+  })
+);
+
 /**
  * Patient portal sign-in.
  *

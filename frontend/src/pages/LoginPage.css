@@ -161,6 +161,37 @@
   transform: translateY(-1px);
 }
 
+.login-patient-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  color: var(--charcoal-soft);
+  font-size: 0.85rem;
+}
+
+.login-patient-link span {
+  color: var(--charcoal-soft);
+}
+
+.login-patient-link button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--burgundy);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-patient-link button:hover {
+  color: var(--burgundy-deep);
+}
+
 .login-security {
   display: flex;
   align-items: flex-start;

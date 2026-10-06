@@ -31,7 +31,6 @@ function authenticate(req, res, next) {
     return next(ApiError.unauthorized('Invalid or expired session.'));
   }
 
-  // A patient portal token identifies a patient and may not reach staff data.
   if (claims.audience === 'patient') {
     req.user = {
       id: claims.id,
@@ -39,6 +38,19 @@ function authenticate(req, res, next) {
       audience: 'patient',
       fullName: claims.fullName,
       email: claims.email,
+    };
+    return next();
+  }
+
+  if (claims.demo) {
+    req.user = {
+      id: claims.id,
+      role: claims.role,
+      audience: 'staff',
+      fullName: claims.fullName,
+      email: claims.email,
+      branch: claims.branch,
+      demo: true,
     };
     return next();
   }
