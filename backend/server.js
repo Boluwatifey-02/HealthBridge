@@ -274,9 +274,10 @@ async function startServer() {
   const databaseReady = await initializeDatabase();
 
   if (!databaseReady) {
-    console.error('HealthBridge could not connect to MySQL.');
+    console.error('HealthBridge could not connect to MySQL at startup.');
     console.error(`Database error: ${getDatabaseError() || 'unknown'}`);
-    process.exit(1);
+    console.error('The service will start in read-only fallback mode.');
+    console.error('Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME and network access.');
   }
 
   await seedStaffAccounts();
