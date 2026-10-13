@@ -270,21 +270,23 @@ async function maybeSeedDemonstrationData() {
   }
 }
 
-async function startServer() {
-  const databaseReady = await initializeDatabase();
-
-  if (!databaseReady) {
-    console.error('HealthBridge could not connect to MySQL at startup.');
-    console.error(`Database error: ${getDatabaseError() || 'unknown'}`);
-    console.error('The service will start in read-only fallback mode.');
-    console.error('Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME and network access.');
-  }
-
-  await seedStaffAccounts();
-  await maybeSeedDemonstrationData();
-
-  app.listen(PORT, () => {
+function startServer() {
+  const server = app.listen(PORT, () => {
     console.log(`HealthBridge backend listening on port ${PORT}`);
+  });
+
+  initializeDatabase().then((databaseReady) => {
+    if (!databaseReady) {
+      console.error('HealthBridge could not connect to MySQL at startup.');
+      console.error(`Database error: ${getDatabaseError() || 'unknown'}`);
+      console.error('The service will start in read-only fallback mode.');
+      console.error('Check DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME and network access.');
+    }
+    return seedStaffAccounts().catch((err) => console.error('Staff seeding error:', err.message));
+  }).then(() => {
+    return maybeSeedDemonstrationData().catch((err) => console.error('Demo seed error:', err.message));
+  }).catch((err) => {
+    console.error('Background initialization error:', err.message);
   });
 }
 

@@ -51,6 +51,7 @@ async function initializeDatabase() {
       port: Number(process.env.DB_PORT || 3306),
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD || '',
+      connectTimeout: 15000,
       ...sslOptions,
     });
 
